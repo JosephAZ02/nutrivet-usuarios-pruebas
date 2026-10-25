@@ -15,7 +15,7 @@ public class InvoiceDetail {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 
-	private int amount;
+	private double amount;
 	private double unitPrice;
 	private double total;
 	private int idProduct;
@@ -31,11 +31,11 @@ public class InvoiceDetail {
 		this.id = id;
 	}
 
-	public int getAmount() {
+	public double getAmount() {
 		return amount;
 	}
 
-	public void setAmount(int amount) {
+	public void setAmount(double amount) {
 		this.amount = amount;
 	}
 

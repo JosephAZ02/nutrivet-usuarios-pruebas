@@ -23,6 +23,7 @@ public class Product {
 	private double productCost;
 	private double transportCost;
 	private boolean bulkSale;
+	private String photo;
 
 	@Column(name = "category_product_id", nullable = true)
 	private int idCategoryProduct;
@@ -105,5 +106,13 @@ public class Product {
 
 	public void setIdCategoryProduct(Integer idCategoryProduct) {
 		this.idCategoryProduct = idCategoryProduct;
+	}
+
+	public String getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(String photo) {
+		this.photo = photo;
 	}
 }
