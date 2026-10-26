@@ -88,4 +88,9 @@ public class ProductCategoryController {
                     .body("Error al desactivar la categoría: " + e.getMessage());
         }
     }
+
+    @GetMapping("/active")
+    public List<ProductCategory> getActiveCategories() {
+        return productCategoryService.getActiveCategories();
+    }
 }

@@ -17,7 +17,7 @@ import com.nutrivet.backend.repository.InvoiceDetailRepository;
 import com.nutrivet.backend.repository.InvoiceRepository;
 import com.nutrivet.backend.repository.ProductCategoryRepository;
 import com.nutrivet.backend.repository.ProductRepository;
-
+/* 
 @Service
 public class ReportService {
 
@@ -123,3 +123,4 @@ public class ReportService {
         return results;
     }
 }
+    */
