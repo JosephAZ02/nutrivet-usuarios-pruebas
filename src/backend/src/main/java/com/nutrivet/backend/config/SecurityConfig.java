@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Habilita @PreAuthorize
+@EnableMethodSecurity 
 public class SecurityConfig {
 
     @Autowired
@@ -33,8 +33,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Login público
-                        .anyRequest().authenticated() // Todo lo demás requiere token
+                        .requestMatchers("/api/auth/**").permitAll() 
+                        .anyRequest().authenticated() 
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
@@ -45,10 +45,10 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        // La corrección está aquí: le pasamos userDetailsService al constructor
+        
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
 
-        // La línea de setUserDetailsService ya no es necesaria porque la pasamos arriba
+        
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -60,6 +60,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Encriptación de contraseñas
+        return new BCryptPasswordEncoder(); 
     }
 }
