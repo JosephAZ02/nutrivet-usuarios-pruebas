@@ -20,6 +20,7 @@ public class Product {
 	private String category;
 	private double unitPrice;
 	private int productAmount;
+
 	private double productCost;
 	private double transportCost;
 	private boolean bulkSale;

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8" />
+
+
+    <style>
+        @page {
+            size: A4;
+            margin: 35px 40px;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #263746;
+            font-size: 11px;
+            margin: 0;
+        }
+
+        /* Encabezado del reporte */
+        .header {
+            background-color: #123C46;
+            color: #FFFFFF;
+            padding: 24px;
+            margin-bottom: 25px;
+        }
+
+        .brand {
+            color: #A8E6CF;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .header h1 {
+            color: #FFFFFF;
+            font-size: 25px;
+            margin: 0 0 8px 0;
+        }
+
+        .header p {
+            color: #D4E5E8;
+            font-size: 11px;
+            margin: 0;
+        }
+
+        h2 {
+            color: #123C46;
+            font-size: 16px;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+
+
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            margin-bottom: 18px;
+        }
+
+        .data-table th {
+            background-color: #123C46;
+            color: #FFFFFF;
+            font-size: 10px;
+            text-align: left;
+            padding: 11px 10px;
+        }
+
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid #DCE6E8;
+            font-size: 10px;
+        }
+
+        .data-table tbody tr:nth-child(even) {
+            background-color: #F2F7F7;
+        }
+
+        .data-table .amount {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .data-table .total-row td {
+            background-color: #DDF4EE;
+            color: #123C46;
+            font-weight: bold;
+            border-top: 1px solid #A8D8CC;
+        }
+
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #DCE6E8;
+            color: #718096;
+            font-size: 9px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="header">
+        <div class="brand">NUTRIVET</div>
+        <h1>REPORTE DE VENTAS</h1>
+        <p>Reporte anual · ${year}</p>
+    </div>
+
+
+
+    <h2>Ingresos mensuales</h2>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Mes</th>
+                <th class="amount">Ingresos</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${monthlyRows}
+        </tbody>
+    </table>
+
+    <h2>Ventas por categoría</h2>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Categoría</th>
+                <th class="amount">Total de ventas</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${categoryRows}
+        </tbody>
+    </table>
+
+    <h2>Productos más vendidos</h2>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th class="amount">Cantidad vendida</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${productRows}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        NUTRIVET · Reporte generado automáticamente
+    </div>
+
+</body>
+
+</html>
