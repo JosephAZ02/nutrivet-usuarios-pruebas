@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +28,10 @@ public class ProductCategoryController {
     @Autowired
     private ProductCategoryService productCategoryService;
 
+
+
     @GetMapping("/all")
+    @PreAuthorize ("hasAuthority('PRODUCT_CATEGORY_GET_ALL')")
     public List<ProductCategory> getAllProductCategories() {
         return productCategoryService.getAll();
     }
@@ -47,6 +51,7 @@ public class ProductCategoryController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize ("hasAuthority('PRODUCT_CATEGORY_CREATE')")
     public ResponseEntity<String> addProductCategory(@RequestBody ProductCategory productCategory) {
         try {
             productCategoryService.add(productCategory);
@@ -57,6 +62,7 @@ public class ProductCategoryController {
     }
 
     @PutMapping("/update/{id}")
+    @PreAuthorize ("hasAuthority('PRODUCT_CATEGORY_UPDATE')")
     public ResponseEntity<String> updateProductCategory(@PathVariable int id,
             @RequestBody ProductCategory productCategory) {
         try {
@@ -72,6 +78,7 @@ public class ProductCategoryController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize ("hasAuthority('PRODUCT_CATEGORY_DELETE')")
     public ResponseEntity<String> deactivateProductCategory(@PathVariable int id) {
         try {
             productCategoryService.deactivate(id);
@@ -80,5 +87,10 @@ public class ProductCategoryController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Error al desactivar la categoría: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/active")
+    public List<ProductCategory> getActiveCategories() {
+        return productCategoryService.getActiveCategories();
     }
 }

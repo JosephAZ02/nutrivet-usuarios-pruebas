@@ -16,6 +16,11 @@ public class ProductCategoryService {
     @Autowired
     private ProductCategoryRepository productCategoryRepository;
 
+
+    public List<ProductCategory> getActiveCategories() {
+        return productCategoryRepository.findByActiveTrue();
+    }   
+
     private void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new RuntimeException("El nombre de la categoría es obligatorio");
