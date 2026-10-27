@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -21,7 +22,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 public class ReportPdf {
 
     public byte[] generatePdf(
-            int year,
+
             List<MonthlyIncomeDto> monthlyIncome,
             List<CategorySalesDto> categorySales,
             List<TopProductDto> topProducts) throws Exception {
@@ -83,7 +84,7 @@ public class ReportPdf {
         }
 
         // Reemplazar las variables de la plantilla
-        html = html.replace("${year}", String.valueOf(year));
+        html = html.replace("${year}", String.valueOf(LocalDate.now().getYear()));
         html = html.replace("${monthlyRows}", monthlyRows.toString());
         html = html.replace("${categoryRows}", categoryRows.toString());
         html = html.replace("${productRows}", productRows.toString());

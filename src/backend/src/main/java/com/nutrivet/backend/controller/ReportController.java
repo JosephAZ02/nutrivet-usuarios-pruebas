@@ -9,9 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.nutrivet.backend.service.ReportService;
 
@@ -31,8 +29,8 @@ public class ReportController {
         }
 
         @GetMapping("/monthlyIncome")
-        public List<com.nutrivet.backend.dto.MonthlyIncomeDto> getMonthlyIncome(@RequestParam int year) {
-                return this.reportService.monthlyIncome(year);
+        public List<com.nutrivet.backend.dto.MonthlyIncomeDto> getMonthlyIncome() {
+                return this.reportService.monthlyIncome();
         }
 
         @GetMapping("/categorySales")
@@ -41,20 +39,19 @@ public class ReportController {
         }
 
         @GetMapping("/topProducts")
-        public List<com.nutrivet.backend.dto.TopProductDto> getTopProducts(@RequestParam int limit) {
-                return this.reportService.topProducts(limit);
+        public List<com.nutrivet.backend.dto.TopProductDto> getTopProducts() {
+                return this.reportService.topProducts();
         }
 
         @GetMapping("/export/pdf")
-        public ResponseEntity<byte[]> exportPdf(
-                        @RequestParam(defaultValue = "2026") int year) throws Exception {
-                var monthlyIncome = reportService.monthlyIncome(year);
+        public ResponseEntity<byte[]> exportPdf() throws Exception {
+                var monthlyIncome = reportService.monthlyIncome();
                 var categorySales = reportService.categorySales();
-                var topProducts = reportService.topProducts(year);
+                var topProducts = reportService.topProducts();
 
                 // Generar el PDF pasando los cuatro parámetros
                 byte[] pdf = reportPdf.generatePdf(
-                                year,
+
                                 monthlyIncome,
                                 categorySales,
                                 topProducts);
@@ -68,14 +65,13 @@ public class ReportController {
         }
 
         @GetMapping("/export/excel")
-        public ResponseEntity<byte[]> exportExcel(
-                        @RequestParam(defaultValue = "2026") int year)
+        public ResponseEntity<byte[]> exportExcel()
                         throws Exception {
 
                 byte[] excel = reportExcel.generateExcelReport(
-                                reportService.monthlyIncome(year),
+                                reportService.monthlyIncome(),
                                 reportService.categorySales(),
-                                reportService.topProducts(year));
+                                reportService.topProducts());
 
                 return ResponseEntity.ok()
                                 .header(
