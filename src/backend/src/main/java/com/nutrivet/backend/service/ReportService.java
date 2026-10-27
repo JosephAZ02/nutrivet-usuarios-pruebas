@@ -1,5 +1,6 @@
 package com.nutrivet.backend.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,13 +31,13 @@ public class ReportService {
     @Autowired
     private ProductCategoryRepository categoryRepository;
 
-    public List<com.nutrivet.backend.dto.MonthlyIncomeDto> monthlyIncome(int year) {
+    public List<com.nutrivet.backend.dto.MonthlyIncomeDto> monthlyIncome() {
         // cuánto se facturó en cada mes del año
 
         double totals[] = new double[12];
 
         for (Invoice invoice : invoiceRepository.findAll()) {// recorrer todas las facturas
-            if (invoice.getDate().getYear() == year) {
+            if (invoice.getDate().getYear() == LocalDate.now().getYear()) {// filtrar por el año actual
                 int month = invoice.getDate().getMonthValue();
                 totals[month - 1] += invoice.getTotal();// sumar el total de la factura al mes correspondiente
             }
@@ -91,11 +92,11 @@ public class ReportService {
         return results;
     }
 
-    public List<TopProductDto> topProducts(int limit) {
+    public List<TopProductDto> topProducts() {
         Map<Integer, Double> quantities = new HashMap<>();
 
         for (Invoice invoice : invoiceRepository.findAll()) {// recorrer todas las ventas
-            if (invoice.getDate().getYear() == limit) {
+            if (invoice.getDate().getYear() == LocalDate.now().getYear()) {// filtrar por el año actual
 
                 for (InvoiceDetail detail : detailRepository.findAll()) {// recorrer todos los detalles de factura
                     if (detail.getIdInvoice() == invoice.getId()) {// verificar que el detalle pertenece a la factura
