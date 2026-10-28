@@ -2,8 +2,10 @@ package com.nutrivet.backend.repository;
 
 import com.nutrivet.backend.domain.InventoryMovement;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
 
-@Repository
 public interface InventoryMovementRepository extends JpaRepository<InventoryMovement, Integer> {
+    
+    List<InventoryMovement> findByProduct_IdOrderByMovementDateDesc(int productId);
+
 }

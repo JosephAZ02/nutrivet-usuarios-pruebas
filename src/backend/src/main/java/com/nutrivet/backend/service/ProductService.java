@@ -3,10 +3,7 @@ package com.nutrivet.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.nutrivet.backend.domain.Product;
 import com.nutrivet.backend.domain.ProductCategory;
 import com.nutrivet.backend.repository.ProductRepository;
@@ -15,11 +12,13 @@ import com.nutrivet.backend.repository.ProductCategoryRepository;
 @Service
 public class ProductService {
 
-    @Autowired
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
+    private final ProductCategoryRepository productCategoryRepository;
 
-    @Autowired
-    private ProductCategoryRepository productCategoryRepository;
+    public ProductService(ProductRepository productRepository, ProductCategoryRepository productCategoryRepository) {
+        this.productRepository = productRepository;
+        this.productCategoryRepository = productCategoryRepository;
+    }
 
     private void validateProduct(Product product) {
 
@@ -38,6 +37,9 @@ public class ProductService {
         if (product.getUnitPrice() < 0) {
             throw new RuntimeException("El precio de venta no puede ser negativo");
         }
+        if (product.getProductAmount() < 0) {
+            throw new RuntimeException("La cantidad no puede ser negativa");
+        }
 
         if (product.getProductCost() < 0) {
             throw new RuntimeException("El costo del producto no puede ser negativo");
@@ -47,15 +49,12 @@ public class ProductService {
             throw new RuntimeException("El costo de transporte no puede ser negativo");
         }
 
-        if (product.getProductAmount() < 0) {
-            throw new RuntimeException("La cantidad no puede ser negativa");
-        }
-
         if (product.getCategory() == null || product.getCategory().getId() <= 0) {
             throw new RuntimeException("Debe seleccionar una categoría");
         }
 
-        ProductCategory category = productCategoryRepository.findById(product.getCategory().getId()).orElseThrow(() ->new RuntimeException("La categoría no existe"));
+        ProductCategory category = productCategoryRepository.findById(product.getCategory().getId())
+                .orElseThrow(() -> new RuntimeException("La categoría no existe"));
 
         if (!category.isActive()) {
             throw new RuntimeException("La categoría está desactivada");
@@ -74,6 +73,9 @@ public class ProductService {
 
     public Product add(Product product) {
         validateProduct(product);
+        if (product.getProductAmount() < 0) {
+            throw new RuntimeException("La cantidad no puede ser negativa");
+        }
         String code = product.getCode().trim();
 
         if (productRepository.existsByCodeIgnoreCase(code)) {
@@ -90,8 +92,11 @@ public class ProductService {
 
         validateProduct(updatedProduct);
 
-        Product existingProduct = productRepository.findById(id).orElseThrow(() -> new RuntimeException("El producto no existe"));
-        if (!existingProduct.isActive()) {throw new RuntimeException("No se puede actualizar un producto desactivado");}
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("El producto no existe"));
+        if (!existingProduct.isActive()) {
+            throw new RuntimeException("No se puede actualizar un producto desactivado");
+        }
         String code = updatedProduct.getCode().trim();
 
         if (productRepository.existsByCodeIgnoreCaseAndIdNot(code, id)) {
@@ -102,7 +107,6 @@ public class ProductService {
         existingProduct.setName(updatedProduct.getName().trim());
         existingProduct.setCategory(updatedProduct.getCategory());
         existingProduct.setUnitPrice(updatedProduct.getUnitPrice());
-        existingProduct.setProductAmount(updatedProduct.getProductAmount());
         existingProduct.setProductCost(updatedProduct.getProductCost());
         existingProduct.setTransportCost(updatedProduct.getTransportCost());
         existingProduct.setBulkSale(updatedProduct.isBulkSale());
@@ -112,11 +116,52 @@ public class ProductService {
     }
 
     public void deleteById(Integer id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("El producto no existe"));
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("El producto no existe"));
 
-        if (!product.isActive()) {throw new RuntimeException("El producto ya está desactivado");}
+        if (!product.isActive()) {
+            throw new RuntimeException("El producto ya está desactivado");
+        }
 
         product.setActive(false);
         productRepository.save(product);
     }
+
+    // buscadores
+    public List<Product> searchByName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new RuntimeException("Debe ingresar un nombre para buscar");
+        }
+        return productRepository.findByNameContainingIgnoreCaseAndActiveTrue(name.trim());
+    }
+
+    public Optional<Product> searchByCode(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            throw new RuntimeException("Debe ingresar un código para buscar");
+        }
+        return productRepository.findByCodeIgnoreCaseAndActiveTrue(code.trim());
+    }
+
+    // stock
+    public String getStockStatus(int productAmount) {
+        if (productAmount < 0) {
+            throw new RuntimeException("La cantidad de existencias no puede ser negativa");
+        }
+        if (productAmount <= 5) {
+            return "Crítico";
+        }
+        if (productAmount <= 19) {
+            return "Bajo";
+        }
+        return "Bueno";
+    }
+
+    public List<Product> getCriticalStockProducts() {
+        return productRepository.findByActiveTrue().stream().filter(product -> product.getProductAmount() <= 5).toList();
+    }
+
+    public List<Product> getLowStockProducts() {
+        return productRepository.findByActiveTrue().stream().filter(product -> product.getProductAmount() > 5 && product.getProductAmount() < 20).toList();
+    }
+
 }

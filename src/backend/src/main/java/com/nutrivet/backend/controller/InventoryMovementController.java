@@ -1,19 +1,9 @@
 package com.nutrivet.backend.controller;
 
 import java.util.List;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import com.nutrivet.backend.domain.InventoryMovement;
 import com.nutrivet.backend.service.InventoryMovementService;
 
@@ -22,31 +12,51 @@ import com.nutrivet.backend.service.InventoryMovementService;
 @CrossOrigin(origins = "*")
 public class InventoryMovementController {
 
-    @Autowired
-    private InventoryMovementService inventoryMovementService;
+    private final InventoryMovementService inventoryMovementService;
+
+    public InventoryMovementController(InventoryMovementService inventoryMovementService) {
+        this.inventoryMovementService = inventoryMovementService;
+    }
+
+    // endpoint de consultar movimientos de un producto en especifico
+
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<?> getMovementsByProduct(@PathVariable Integer productId) {
+        try {
+            return ResponseEntity.ok(inventoryMovementService.getMovementsByProduct(productId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 
     @GetMapping("/all")
-    public List<InventoryMovement> getAllInventoryMovements() {
-        return inventoryMovementService.getAll();
+    public ResponseEntity<List<InventoryMovement>> getAllInventoryMovements() {
+        return ResponseEntity.ok(inventoryMovementService.getAll());
     }
 
     @GetMapping("/get/{id}")
-    public Optional<InventoryMovement> getInventoryMovementById(@PathVariable Integer id) {
-        return inventoryMovementService.getById(id);
+    public ResponseEntity<?> getInventoryMovementById(@PathVariable Integer id) {
+        return inventoryMovementService.getById(id).<ResponseEntity<?>>map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró el movimiento de inventario"));
     }
 
     @PostMapping("/add")
-    public InventoryMovement addInventoryMovement(@RequestBody InventoryMovement inventoryMovement) {
-        return inventoryMovementService.add(inventoryMovement);
+    public ResponseEntity<?> addInventoryMovement(@RequestBody InventoryMovement inventoryMovement) {
+        try {
+            InventoryMovement savedMovement = inventoryMovementService.add(inventoryMovement);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedMovement);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
-
-    @PutMapping("/update")
-    public InventoryMovement updateInventoryMovement(@RequestBody InventoryMovement inventoryMovement) {
-        return inventoryMovementService.add(inventoryMovement);
-    }
-
-    @DeleteMapping("/delete/{id}")
-    public void deleteInventoryMovement(@PathVariable int id) {
-        inventoryMovementService.deleteById(id);
-    }
+    /*
+     * @DeleteMapping("/delete/{id}")
+     * public ResponseEntity<?> deleteInventoryMovement(@PathVariable Integer id) {
+     * try {
+     * inventoryMovementService.deleteById(id);
+     * return ResponseEntity.noContent().build();
+     * } catch (RuntimeException e) {
+     * return ResponseEntity.badRequest().body("No se pudo eliminar el movimiento");
+     * }
+     * }
+     */
 }

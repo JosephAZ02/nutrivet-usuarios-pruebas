@@ -4,72 +4,94 @@ import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "inventory_movement")
 public class InventoryMovement {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
-	private String type;
-	private int amount;
-	private LocalDate movementDate;
-	private int idProduct;
+    @Column(nullable = false)
+    private String type;
 
-	@Column(name = "invoice_id", nullable = true)
-	private Integer idInvoice;
+    @Column(nullable = false)
+    private int amount;
 
-	public int getId() {
-		return id;
-	}
+    @Column(nullable = false)
+    private LocalDate movementDate;
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    @Column(nullable = false)
+    private String reason;
 
-	public String getType() {
-		return type;
-	}
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "id_product", nullable = false)
+    private Product product;
 
-	public void setType(String type) {
-		this.type = type;
-	}
+    @Column(name = "invoice_id", nullable = true)
+    private Integer idInvoice;
 
-	public int getAmount() {
-		return amount;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public void setAmount(int amount) {
-		this.amount = amount;
-	}
+    public void setId(int id) {
+        this.id = id;
+    }
 
-	public LocalDate getMovementDate() {
-		return movementDate;
-	}
+    public String getType() {
+        return type;
+    }
 
-	public void setMovementDate(LocalDate movementDate) {
-		this.movementDate = movementDate;
-	}
+    public void setType(String type) {
+        this.type = type;
+    }
 
-	public int getIdProduct() {
-		return idProduct;
-	}
+    public int getAmount() {
+        return amount;
+    }
 
-	public void setIdProduct(int idProduct) {
-		this.idProduct = idProduct;
-	}
+    public void setAmount(int amount) {
+        this.amount = amount;
+    }
 
-	public Integer getIdInvoice() {
-		return idInvoice;
-	}
+    public LocalDate getMovementDate() {
+        return movementDate;
+    }
 
-	public void setIdInvoice(Integer idInvoice) {
-		this.idInvoice = idInvoice;
-	}
+    public void setMovementDate(LocalDate movementDate) {
+        this.movementDate = movementDate;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public Integer getIdInvoice() {
+        return idInvoice;
+    }
+
+    public void setIdInvoice(Integer idInvoice) {
+        this.idInvoice = idInvoice;
+    }
 }

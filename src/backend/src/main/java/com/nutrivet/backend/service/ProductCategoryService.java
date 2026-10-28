@@ -3,19 +3,17 @@ package com.nutrivet.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.nutrivet.backend.domain.ProductCategory;
 import com.nutrivet.backend.repository.ProductCategoryRepository;
 
 @Service
 public class ProductCategoryService {
 
-    @Autowired
-    private ProductCategoryRepository productCategoryRepository;
-
+    private final ProductCategoryRepository productCategoryRepository;
+    public ProductCategoryService(ProductCategoryRepository productCategoryRepository) {
+        this.productCategoryRepository = productCategoryRepository;
+    }
 
     public List<ProductCategory> getActiveCategories() {
         return productCategoryRepository.findByActiveTrue();

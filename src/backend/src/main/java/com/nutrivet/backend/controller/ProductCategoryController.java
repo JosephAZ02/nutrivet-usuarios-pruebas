@@ -2,8 +2,6 @@
 package com.nutrivet.backend.controller;
 
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,9 +23,10 @@ import com.nutrivet.backend.service.ProductCategoryService;
 @CrossOrigin(origins = "*")
 public class ProductCategoryController {
 
-    @Autowired
-    private ProductCategoryService productCategoryService;
-
+    private final ProductCategoryService productCategoryService;
+    public ProductCategoryController(ProductCategoryService productCategoryService) {
+        this.productCategoryService = productCategoryService;
+    }
 
 
     @GetMapping("/all")
