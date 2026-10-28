@@ -1,36 +1,29 @@
+import api from './Api';
 
-const url = 'https://localhost/reports';
+export const ReportService = {
+    getMonthlyIncome: async () => {
+        const response = await api.get('/reports/monthlyIncome');
+        return response.data;
+    },
 
-//obtener el reporte de ingresos mensuales
-export async function getReportMonthlyIncome() {
-    const result = await fetch(url + "/monthlyIncome");
-    const data = await result.json();
-    return data;
-}
-//obtener el reporte de ventas por categoría
-export async function getReportCategorySales() {
-    const result = await fetch(url + "/categorySales");
-    const data = await result.json();
-    return data;
-}
+    getCategorySales: async () => {
+        const response = await api.get('/reports/categorySales');
+        return response.data;
+    },
 
-//obtener el reporte de ventas por producto
-export async function getReportProductSales() {
-    const result = await fetch(url + "/productSales");
-    const data = await result.json();
-    return data;
-}
+    getProductSales: async () => {
+        const response = await api.get('/reports/productSales');
+        return response.data;
+    },
 
-//crear reporte pdf
-export async function createPdfReport() {
-    const result = await fetch(url + "/export/pdf");
-    const data = await result.blob();
-    return data;
-}
+    createPdfReport: async () => {
+        // responseType blob para descargar archivos con Axios
+        const response = await api.get('/reports/export/pdf', { responseType: 'blob' });
+        return response.data;
+    },
 
-//crear reporte excel
-export async function createExcelReport() {
-    const result = await fetch(url + "/export/excel");
-    const data = await result.blob();
-    return data;
-}
+    createExcelReport: async () => {
+        const response = await api.get('/reports/export/excel', { responseType: 'blob' });
+        return response.data;
+    }
+};
