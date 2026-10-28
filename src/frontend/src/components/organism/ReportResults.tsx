@@ -1,10 +1,19 @@
 
-
 interface reportResultsProps {
     title: string; //titulo del reporte
     headers: string[]; //encabezados de la tabla
     rows: (string | number)[][]; //datos de la tabla
 }
+
+export const formatter = new Intl.NumberFormat("es-CR", {
+    style: "currency",
+    currency: "CRC",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+});
+
+const isCurrencyValue = (header: string) =>
+    /total vendido|ingresos|promedio de ingresos|Promedio de ingresos por factura/i.test(header);
 
 function ReportResults({ title, headers, rows }: reportResultsProps) {
     return (
@@ -23,7 +32,11 @@ function ReportResults({ title, headers, rows }: reportResultsProps) {
                         <tr key={index}>
 
                             {row.map((cell, cellIndex) => (
-                                <td key={cellIndex}>{cell}</td>
+                                <td key={cellIndex}>
+                                    {isCurrencyValue(headers[cellIndex]) && typeof cell === "number"
+                                        ? formatter.format(cell)
+                                        : cell}
+                                </td>
                             ))}
                         </tr>
                     ))}

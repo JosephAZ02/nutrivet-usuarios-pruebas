@@ -1,20 +1,15 @@
+import type { ButtonHTMLAttributes } from "react";
 
-interface ButtonProps {
-    children: React.ReactNode;//texto que se le pasa al boton
-    variant?: "primary" | "secondary";//tipo de boton ( primary con color como verde de guardar y el secundario con color como rojo de eliminar)
-    //se pueden agregar más variantes
-    onClick?: () => void //evento que se ejecuta al hacer click 
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+    variant?: "primary" | "secondary";
 }
 
-function Button({ children, variant = "primary", onClick }: ButtonProps) {
-
-    return <>
-
-        <button onClick={onClick} className={`btn btn-${variant}`}>
+function Button({ children, variant = "primary", className, ...props }: ButtonProps) {
+    return (
+        <button {...props} className={`btn btn-${variant} ${className ?? ""}`}>
             {children}
         </button>
-
-    </>
+    );
 }
 
 export default Button;

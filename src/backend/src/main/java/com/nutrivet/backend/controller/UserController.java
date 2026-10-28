@@ -2,13 +2,10 @@ package com.nutrivet.backend.controller;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
 import com.nutrivet.backend.domain.User;
 import com.nutrivet.backend.domain.RegisterRequest;
 import com.nutrivet.backend.service.UserService;
@@ -18,11 +15,12 @@ import com.nutrivet.backend.service.UserService;
 @CrossOrigin(origins = "*")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    public UserController(UserService userService, PasswordEncoder passwordEncoder) {
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @GetMapping("/all")
     @PreAuthorize("hasAuthority('USER_CREATE')")

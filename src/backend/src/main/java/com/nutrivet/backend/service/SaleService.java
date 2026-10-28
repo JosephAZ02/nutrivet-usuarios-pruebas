@@ -38,8 +38,7 @@ public class SaleService {
     public InvoiceResponse createSale(SaleRequest request) {
         validateSale(request);
 
-        // La factura se guarda primero para tener su id; los totales se completan al
-        // final
+        // La factura se guarda primero para tener su id y los totales se completan al final
         Invoice invoice = new Invoice();
         invoice.setDate(LocalDateTime.now());
         invoice.setPaymentMethod(request.paymentMethod());
@@ -59,15 +58,14 @@ public class SaleService {
         return getInvoice(invoice.getId());
     }
 
-    // Devuelve una factura guardada con sus líneas para mostrarla, imprimirla o
-    // descargarla
+    // Devuelve una factura guardada con sus líneas para mostrarla, imprimirla o descargarla
     public InvoiceResponse getInvoice(int id) {
         Invoice invoice = invoiceService.getById(id)
                 .orElseThrow(() -> new RuntimeException("La factura no existe"));
 
         List<InvoiceLineResponse> invoiceLines = new ArrayList<>();
         for (InvoiceDetail detail : invoiceDetailService.getByInvoiceId(id)) {
-            Product product = productService.getById(detail.getIdProduct()).orElse(null);
+            Product product = productService.getByIdWithAnyState(detail.getIdProduct()).orElse(null);
             String code = "";
             String name = "Producto eliminado";
             if (product != null) {
@@ -121,7 +119,7 @@ public class SaleService {
         double lineTotal = round(product.getUnitPrice() * item.quantity());
 
         saveDetail(invoice, product, item.quantity(), lineTotal);
-        saveMovement(invoice, product, item.quantity()); // aquí M3 rebaja el stock
+        saveMovement(invoice, product, item.quantity()); // aquí se rebaja el stock
 
         return lineTotal;
     }

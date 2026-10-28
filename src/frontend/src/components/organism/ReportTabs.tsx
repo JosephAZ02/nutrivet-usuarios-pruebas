@@ -16,6 +16,7 @@ function ReportTabs({ activeReport, onReportChange }: ReportTabsProps) {
     return (
         <section>
             <h2>Reportes y estadísticas</h2>
+            <h3>Resumen del año 2026</h3>
             <ReportTab tabs={TABS} activeId={activeReport} onChange={onReportChange} />
         </section>
     );

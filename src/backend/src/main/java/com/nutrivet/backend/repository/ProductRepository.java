@@ -15,15 +15,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> findByNameContainingIgnoreCaseAndActiveTrue(String name);
     Optional<Product> findByCodeIgnoreCaseAndActiveTrue(String code);
 
-
-
-
-     // Buscar por código de barras (coincidencia exacta)
-    List<Product> findByCode(String code);
-
-    // Buscar por nombre (contiene el texto, sin distinguir mayúsculas)
-    List<Product> findByNameContainingIgnoreCase(String name);
-
     // Buscar por id bloqueando la fila hasta que termine la venta
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Product> findWithLockById(Integer id);
