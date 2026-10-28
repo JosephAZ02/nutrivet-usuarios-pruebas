@@ -2,18 +2,17 @@ package com.nutrivet.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.nutrivet.backend.domain.Invoice;
 import com.nutrivet.backend.repository.InvoiceRepository;
 
 @Service
 public class InvoiceService {
 
-    @Autowired
-    private InvoiceRepository invoiceRepository;
+    private final InvoiceRepository invoiceRepository;
+    public InvoiceService(InvoiceRepository invoiceRepository) {
+        this.invoiceRepository = invoiceRepository;
+    }
 
     public List<Invoice> getAll() {
         return invoiceRepository.findAll();

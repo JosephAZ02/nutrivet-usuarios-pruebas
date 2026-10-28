@@ -1,14 +1,11 @@
 package com.nutrivet.backend.service;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.nutrivet.backend.domain.InventoryMovement;
 import com.nutrivet.backend.domain.Invoice;
 import com.nutrivet.backend.domain.InvoiceDetail;
@@ -24,17 +21,17 @@ public class SaleService {
     private static final String CASH = "EFECTIVO";
     private static final String CARD = "TARJETA";
 
-    @Autowired
-    private InvoiceService invoiceService;
+    private final InvoiceService invoiceService;
+    private final InvoiceDetailService invoiceDetailService;
+    private final InventoryMovementService inventoryMovementService;
+    private final ProductService productService;
 
-    @Autowired
-    private InvoiceDetailService invoiceDetailService;
-
-    @Autowired
-    private InventoryMovementService inventoryMovementService;
-
-    @Autowired
-    private ProductService productService;
+    public SaleService(InvoiceService invoiceService, InvoiceDetailService invoiceDetailService,InventoryMovementService inventoryMovementService, ProductService productService) {
+        this.invoiceService = invoiceService;
+        this.invoiceDetailService = invoiceDetailService;
+        this.inventoryMovementService = inventoryMovementService;
+        this.productService = productService;
+    }
 
     // Si algo falla, spring deshace todo con transactional
     @Transactional

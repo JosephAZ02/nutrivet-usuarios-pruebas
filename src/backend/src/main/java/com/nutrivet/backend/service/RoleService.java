@@ -2,18 +2,18 @@ package com.nutrivet.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.nutrivet.backend.domain.Role;
 import com.nutrivet.backend.repository.RoleRepository;
 
 @Service
 public class RoleService {
 
-    @Autowired
-    private RoleRepository roleRepository;
+   
+    private final RoleRepository roleRepository;
+    public RoleService(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
+    }
 
     public List<Role> getAll() {
         return roleRepository.findAll();
