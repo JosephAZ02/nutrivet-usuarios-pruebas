@@ -1,46 +1,34 @@
-import type ProductCategory from "../interfaces/ProductCategory"
-const URL = "http://localhost:8083/api/productCategory";
 
+import api from './Api';
+import type ProductCategory from '../interfaces/ProductCategory';
 
+export const ProductCategoryService = {
+  getAll: async (): Promise<ProductCategory[]> => {
+    const response = await api.get('/productCategory/all');
+    return response.data;
+  },
 
-export async function LoadProductCategories() {
-    const response = await fetch(URL + "/all");
-    const data: ProductCategory[] = await response.json();
-    return data;
-}
-
-export async function CreateProductCategory(name: string) {
-    const response = await fetch(URL + "/add", {
-        method: "POST",
-        body: new URLSearchParams({ name })
+  create: async (name: string) => {
+    const response = await api.post('/productCategory/add', new URLSearchParams({ name }), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
-    return response.ok;
-}
+    return response.status === 200 || response.status === 201;
+  },
 
-export async function DeleteProductCategory(productCategoryId: number) {
+  getById: async (productCategoryId: number): Promise<ProductCategory> => {
+    const response = await api.get(`/productCategory/get/${productCategoryId}`);
+    return response.data;
+  },
 
-    const response = await fetch(URL + "/delete" + "/" + productCategoryId, {
-        method: "DELETE"
+  update: async (productCategoryId: number, name: string) => {
+    const response = await api.put(`/productCategory/update/${productCategoryId}`, new URLSearchParams({ name }), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
+    return response.status === 200;
+  },
 
-    return response.ok;
-}
-
-export async function getProductCategoryById(productCategoryId: number) {
-
-    const response = await fetch(
-        URL + "/get/" + productCategoryId
-    );
-    const data: ProductCategory = await response.json();
-    return data;
-}
-
-export async function UpdateProductCategory(productCategoryId: number, name: string) {
-
-    const response = await fetch(URL + "/update" + "/" + productCategoryId, {
-        method: "PUT",
-        body: new URLSearchParams({ name })
-    });
-    return response.ok;
-}
-
+  delete: async (productCategoryId: number) => {
+    const response = await api.delete(`/productCategory/delete/${productCategoryId}`);
+    return response.status === 200;
+  }
+};

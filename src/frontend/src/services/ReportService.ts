@@ -1,36 +1,58 @@
+const url = 'http://localhost:8080/api/reports';
+const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbjIiLCJpYXQiOjE3OTMyMTk2NDEsImV4cCI6MTc5MzI1NTY0MX0.0sWNgIWhFw0tzNqYFM0Se3fL2zK2bKZKcssPR-ki_QI";
 
-const url = 'https://localhost/reports';
+interface CategorySales {
+    category: string;
+    total: number;
+}
+
+export interface MonthlyIncome {
+    month: string;
+    total: number;
+    cantInvoices: number;
+}
+
+interface ProductSales {
+    position: string;
+    product: string;
+    category: string;
+    volume: number;
+    income: number;
+}
 
 //obtener el reporte de ingresos mensuales
-export async function getReportMonthlyIncome() {
-    const result = await fetch(url + "/monthlyIncome");
-    const data = await result.json();
-    return data;
+export async function getReportMonthlyIncome(): Promise<MonthlyIncome[]> {
+    try {
+        const result = await fetch(url + "/monthlyIncome", {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const data = await result.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching monthly income report:", error);
+        throw error;
+    }
 }
 //obtener el reporte de ventas por categoría
-export async function getReportCategorySales() {
-    const result = await fetch(url + "/categorySales");
+export async function getReportCategorySales(): Promise<CategorySales[]> {
+    const result = await fetch(url + "/categorySales", {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
     const data = await result.json();
     return data;
 }
 
 //obtener el reporte de ventas por producto
-export async function getReportProductSales() {
-    const result = await fetch(url + "/productSales");
+export async function getReportProductSales(): Promise<ProductSales[]> {
+    const result = await fetch(url + "/topProducts", {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
     const data = await result.json();
-    return data;
-}
-
-//crear reporte pdf
-export async function createPdfReport() {
-    const result = await fetch(url + "/export/pdf");
-    const data = await result.blob();
-    return data;
-}
-
-//crear reporte excel
-export async function createExcelReport() {
-    const result = await fetch(url + "/export/excel");
-    const data = await result.blob();
     return data;
 }
