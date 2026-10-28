@@ -2,18 +2,17 @@ package com.nutrivet.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.nutrivet.backend.domain.ClientInstallment;
 import com.nutrivet.backend.repository.ClientInstallmentRepository;
 
 @Service
 public class ClientInstallmentService {
 
-    @Autowired
-    private ClientInstallmentRepository clientInstallmentRepository;
+    private final ClientInstallmentRepository clientInstallmentRepository;
+    public ClientInstallmentService(ClientInstallmentRepository clientInstallmentRepository) {
+        this.clientInstallmentRepository = clientInstallmentRepository;
+    }
 
     public List<ClientInstallment> getAll() {
         return clientInstallmentRepository.findAll();

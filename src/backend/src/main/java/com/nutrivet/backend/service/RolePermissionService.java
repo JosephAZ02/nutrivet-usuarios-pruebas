@@ -2,18 +2,17 @@ package com.nutrivet.backend.service;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.nutrivet.backend.domain.RolePermission;
 import com.nutrivet.backend.repository.RolePermissionRepository;
 
 @Service
 public class RolePermissionService {
 
-    @Autowired
-    private RolePermissionRepository rolePermissionRepository;
+    private final RolePermissionRepository rolePermissionRepository;
+    public RolePermissionService(RolePermissionRepository rolePermissionRepository) {
+        this.rolePermissionRepository = rolePermissionRepository;
+    }
 
     public List<RolePermission> getAll() {
         return rolePermissionRepository.findAll();

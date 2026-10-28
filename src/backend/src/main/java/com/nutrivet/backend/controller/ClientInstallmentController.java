@@ -2,8 +2,6 @@ package com.nutrivet.backend.controller;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,8 +20,10 @@ import com.nutrivet.backend.service.ClientInstallmentService;
 @CrossOrigin(origins = "*")
 public class ClientInstallmentController {
 
-    @Autowired
-    private ClientInstallmentService clientInstallmentService;
+    private final ClientInstallmentService clientInstallmentService;
+    public ClientInstallmentController(ClientInstallmentService clientInstallmentService) {
+        this.clientInstallmentService = clientInstallmentService;
+    }
 
     @GetMapping("/all")
     public List<ClientInstallment> getAllClientInstallments() {

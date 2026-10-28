@@ -6,7 +6,6 @@ import com.nutrivet.backend.domain.User;
 import com.nutrivet.backend.repository.PermissionRepository;
 import com.nutrivet.backend.repository.RolePermissionRepository;
 import com.nutrivet.backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,14 +19,16 @@ import java.util.List;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    
+    private final UserRepository userRepository;
+    private final RolePermissionRepository rolePermissionRepository;
+    private final PermissionRepository permissionRepository;
 
-    @Autowired
-    private RolePermissionRepository rolePermissionRepository;
-
-    @Autowired
-    private PermissionRepository permissionRepository;
+    public UserDetailsServiceImpl(UserRepository userRepository, RolePermissionRepository rolePermissionRepository, PermissionRepository permissionRepository) {
+        this.userRepository = userRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
+        this.permissionRepository = permissionRepository;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

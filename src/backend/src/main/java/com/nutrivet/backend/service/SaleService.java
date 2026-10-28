@@ -1,14 +1,11 @@
 package com.nutrivet.backend.service;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.nutrivet.backend.domain.InventoryMovement;
 import com.nutrivet.backend.domain.Invoice;
 import com.nutrivet.backend.domain.InvoiceDetail;
@@ -24,24 +21,24 @@ public class SaleService {
     private static final String CASH = "EFECTIVO";
     private static final String CARD = "TARJETA";
 
-    @Autowired
-    private InvoiceService invoiceService;
+    private final InvoiceService invoiceService;
+    private final InvoiceDetailService invoiceDetailService;
+    private final InventoryMovementService inventoryMovementService;
+    private final ProductService productService;
 
-    @Autowired
-    private InvoiceDetailService invoiceDetailService;
-
-    @Autowired
-    private InventoryMovementService inventoryMovementService;
-
-    @Autowired
-    private ProductService productService;
+    public SaleService(InvoiceService invoiceService, InvoiceDetailService invoiceDetailService,InventoryMovementService inventoryMovementService, ProductService productService) {
+        this.invoiceService = invoiceService;
+        this.invoiceDetailService = invoiceDetailService;
+        this.inventoryMovementService = inventoryMovementService;
+        this.productService = productService;
+    }
 
     // Si algo falla, spring deshace todo con transactional
     @Transactional
     public InvoiceResponse createSale(SaleRequest request) {
         validateSale(request);
 
-        // La factura se guarda primero para tener su id; los totales se completan al final
+        // La factura se guarda primero para tener su id y los totales se completan al final
         Invoice invoice = new Invoice();
         invoice.setDate(LocalDateTime.now());
         invoice.setPaymentMethod(request.paymentMethod());
@@ -68,7 +65,7 @@ public class SaleService {
 
         List<InvoiceLineResponse> invoiceLines = new ArrayList<>();
         for (InvoiceDetail detail : invoiceDetailService.getByInvoiceId(id)) {
-            Product product = productService.getById(detail.getIdProduct()).orElse(null);
+            Product product = productService.getByIdWithAnyState(detail.getIdProduct()).orElse(null);
             String code = "";
             String name = "Producto eliminado";
             if (product != null) {
@@ -98,25 +95,31 @@ public class SaleService {
         }
     }
 
-    // Vende un producto, valida, guarda la línea, rebaja el stock y registra la salida.
+    // Vende un producto, valida, guarda la línea, rebaja el stock y registra la
+    // salida.
     // Devuelve el total de la línea.
     private double sellItem(Invoice invoice, SaleItemRequest item) {
         if (item.quantity() <= 0) {
             throw new RuntimeException("La cantidad de cada producto debe ser mayor a cero");
         }
 
-        Product product = productService.getByIdWithLock(item.productId()).orElseThrow(() -> new RuntimeException("El producto con id " + item.productId() + " no existe"));
+        Product product = productService.getByIdWithLock(item.productId())
+                .orElseThrow(() -> new RuntimeException("El producto con id " + item.productId() + " no existe"));
+
+        // Validaciones de stock y estado del producto
+        if (!product.isActive()) {
+            throw new RuntimeException("El producto \"" + product.getName() + "\" está desactivado");
+        }
 
         if (product.getProductAmount() < item.quantity()) {
-            throw new RuntimeException("Existencias insuficientes de \"" + product.getName()
-                    + "\": disponibles " + product.getProductAmount() + ", solicitadas " + item.quantity());
+            throw new RuntimeException("Existencias insuficientes de \"" + product.getName() + "\": disponibles "
+                    + product.getProductAmount() + ", solicitadas " + item.quantity());
         }
 
         double lineTotal = round(product.getUnitPrice() * item.quantity());
 
         saveDetail(invoice, product, item.quantity(), lineTotal);
-        discountStock(product, item.quantity());
-        saveMovement(invoice, product, item.quantity());
+        saveMovement(invoice, product, item.quantity()); // aquí se rebaja el stock
 
         return lineTotal;
     }
@@ -131,22 +134,19 @@ public class SaleService {
         invoiceDetailService.add(detail);
     }
 
-    private void discountStock(Product product, int quantity) {
-        product.setProductAmount(product.getProductAmount() - quantity);
-        productService.add(product);
-    }
-
+    // Registra la salida en donde InventoryMovementService.add es quien rebaja el stock
     private void saveMovement(Invoice invoice, Product product, int quantity) {
         InventoryMovement movement = new InventoryMovement();
         movement.setType("SALIDA");
         movement.setAmount(quantity);
-        movement.setMovementDate(LocalDate.now());
-        //movement.setIdProduct(product.getId());
+        movement.setReason("Venta");
+        movement.setProduct(product);
         movement.setIdInvoice(invoice.getId());
         inventoryMovementService.add(movement);
     }
 
-    // Con tarjeta el vuelto es 0. En efectivo se exige el monto recibido y se calcula el vuelto.
+    // Con tarjeta el vuelto es 0. En efectivo se exige el monto recibido y se
+    // calcula el vuelto.
     private double calculateChange(SaleRequest request, double total) {
         if (!CASH.equals(request.paymentMethod())) {
             return 0;

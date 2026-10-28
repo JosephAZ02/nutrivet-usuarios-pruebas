@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import com.nutrivet.backend.domain.Invoice;
 import com.nutrivet.backend.domain.InvoiceDetail;
 import com.nutrivet.backend.domain.Product;
-import com.nutrivet.backend.domain.ProductCategory;
 import com.nutrivet.backend.dto.CategorySalesDto;
 import com.nutrivet.backend.dto.TopProductDto;
 import com.nutrivet.backend.repository.InvoiceDetailRepository;
