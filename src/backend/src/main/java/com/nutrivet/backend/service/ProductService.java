@@ -115,6 +115,20 @@ public class ProductService {
         return productRepository.save(existingProduct);
     }
 
+      //igual que getById, pero bloquea la fila hasta que termine la venta
+    public Optional<Product> getByIdWithLock(Integer id) {
+        return productRepository.findWithLockById(id);
+    }
+
+    //buscador de la factura. Primero por código de barras, y si no hay, por nombre
+    public List<Product> searchByCodeOrName(String text) {
+        List<Product> byCode = productRepository.findByCode(text);
+        if (!byCode.isEmpty()) {
+            return byCode;
+        }
+        return productRepository.findByNameContainingIgnoreCase(text);
+    }
+
     public void deleteById(Integer id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("El producto no existe"));
