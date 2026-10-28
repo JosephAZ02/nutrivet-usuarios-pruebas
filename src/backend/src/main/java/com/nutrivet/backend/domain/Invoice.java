@@ -1,6 +1,6 @@
 package com.nutrivet.backend.domain;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,7 +18,7 @@ public class Invoice {
 	private int id;
 
 	private String number;
-	private LocalDate date;
+	private LocalDateTime date;
 	private double subtotal;
 	private double total;
 	private String paymentMethod;
@@ -42,11 +42,11 @@ public class Invoice {
 		this.number = number;
 	}
 
-	public LocalDate getDate() {
+	public LocalDateTime getDate() {
 		return date;
 	}
 
-	public void setDate(LocalDate date) {
+	public void setDate(LocalDateTime date) {
 		this.date = date;
 	}
 
