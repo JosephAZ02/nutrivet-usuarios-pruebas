@@ -41,7 +41,8 @@ public class SaleService {
     public InvoiceResponse createSale(SaleRequest request) {
         validateSale(request);
 
-        // La factura se guarda primero para tener su id; los totales se completan al final
+        // La factura se guarda primero para tener su id; los totales se completan al
+        // final
         Invoice invoice = new Invoice();
         invoice.setDate(LocalDateTime.now());
         invoice.setPaymentMethod(request.paymentMethod());
@@ -61,7 +62,8 @@ public class SaleService {
         return getInvoice(invoice.getId());
     }
 
-    // Devuelve una factura guardada con sus líneas para mostrarla, imprimirla o descargarla
+    // Devuelve una factura guardada con sus líneas para mostrarla, imprimirla o
+    // descargarla
     public InvoiceResponse getInvoice(int id) {
         Invoice invoice = invoiceService.getById(id)
                 .orElseThrow(() -> new RuntimeException("La factura no existe"));
@@ -98,25 +100,31 @@ public class SaleService {
         }
     }
 
-    // Vende un producto, valida, guarda la línea, rebaja el stock y registra la salida.
+    // Vende un producto, valida, guarda la línea, rebaja el stock y registra la
+    // salida.
     // Devuelve el total de la línea.
     private double sellItem(Invoice invoice, SaleItemRequest item) {
         if (item.quantity() <= 0) {
             throw new RuntimeException("La cantidad de cada producto debe ser mayor a cero");
         }
 
-        Product product = productService.getByIdWithLock(item.productId()).orElseThrow(() -> new RuntimeException("El producto con id " + item.productId() + " no existe"));
+        Product product = productService.getByIdWithLock(item.productId())
+                .orElseThrow(() -> new RuntimeException("El producto con id " + item.productId() + " no existe"));
+
+        // Validaciones de stock y estado del producto
+        if (!product.isActive()) {
+            throw new RuntimeException("El producto \"" + product.getName() + "\" está desactivado");
+        }
 
         if (product.getProductAmount() < item.quantity()) {
-            throw new RuntimeException("Existencias insuficientes de \"" + product.getName()
-                    + "\": disponibles " + product.getProductAmount() + ", solicitadas " + item.quantity());
+            throw new RuntimeException("Existencias insuficientes de \"" + product.getName() + "\": disponibles "
+                    + product.getProductAmount() + ", solicitadas " + item.quantity());
         }
 
         double lineTotal = round(product.getUnitPrice() * item.quantity());
 
         saveDetail(invoice, product, item.quantity(), lineTotal);
-        discountStock(product, item.quantity());
-        saveMovement(invoice, product, item.quantity());
+        saveMovement(invoice, product, item.quantity()); // aquí M3 rebaja el stock
 
         return lineTotal;
     }
@@ -131,22 +139,19 @@ public class SaleService {
         invoiceDetailService.add(detail);
     }
 
-    private void discountStock(Product product, int quantity) {
-        product.setProductAmount(product.getProductAmount() - quantity);
-        productService.add(product);
-    }
-
+    // Registra la salida en donde InventoryMovementService.add es quien rebaja el stock
     private void saveMovement(Invoice invoice, Product product, int quantity) {
         InventoryMovement movement = new InventoryMovement();
         movement.setType("SALIDA");
         movement.setAmount(quantity);
-        movement.setMovementDate(LocalDate.now());
-        //movement.setIdProduct(product.getId());
+        movement.setReason("Venta");
+        movement.setProduct(product);
         movement.setIdInvoice(invoice.getId());
         inventoryMovementService.add(movement);
     }
 
-    // Con tarjeta el vuelto es 0. En efectivo se exige el monto recibido y se calcula el vuelto.
+    // Con tarjeta el vuelto es 0. En efectivo se exige el monto recibido y se
+    // calcula el vuelto.
     private double calculateChange(SaleRequest request, double total) {
         if (!CASH.equals(request.paymentMethod())) {
             return 0;
