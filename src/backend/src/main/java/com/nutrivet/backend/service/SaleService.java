@@ -141,7 +141,7 @@ public class SaleService {
         movement.setType("SALIDA");
         movement.setAmount(quantity);
         movement.setMovementDate(LocalDate.now());
-        movement.setIdProduct(product.getId());
+        //movement.setIdProduct(product.getId());
         movement.setIdInvoice(invoice.getId());
         inventoryMovementService.add(movement);
     }
