@@ -6,13 +6,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
-
 import org.springframework.stereotype.Component;
-
 import com.nutrivet.backend.dto.MonthlyIncomeDto;
 import com.nutrivet.backend.dto.CategorySalesDto;
 import com.nutrivet.backend.dto.TopProductDto;
