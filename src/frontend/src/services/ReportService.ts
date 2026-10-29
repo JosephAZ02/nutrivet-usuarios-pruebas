@@ -1,29 +1,39 @@
+
 import api from './Api';
 
-export const ReportService = {
-    getMonthlyIncome: async () => {
-        const response = await api.get('/reports/monthlyIncome');
-        return response.data;
-    },
+export interface CategorySales {
+    category: string;
+    total: number;
+}
 
-    getCategorySales: async () => {
-        const response = await api.get('/reports/categorySales');
-        return response.data;
-    },
+export interface MonthlyIncome {
+    month: string;
+    total: number;
+    cantInvoices: number;
+}
 
-    getProductSales: async () => {
-        const response = await api.get('/reports/productSales');
-        return response.data;
-    },
+export interface ProductSales {
+    position: string;
+    product: string;
+    category: string;
+    volume: number;
+    income: number;
+}
 
-    createPdfReport: async () => {
-        // responseType blob para descargar archivos con Axios
-        const response = await api.get('/reports/export/pdf', { responseType: 'blob' });
-        return response.data;
-    },
+// reporte de ingresos mensuales
+export async function getReportMonthlyIncome(): Promise<MonthlyIncome[]> {
+    const response = await api.get<MonthlyIncome[]>('/reports/monthlyIncome');
+    return response.data;
+}
 
-    createExcelReport: async () => {
-        const response = await api.get('/reports/export/excel', { responseType: 'blob' });
-        return response.data;
-    }
-};
+// reporte de ventas por categoría
+export async function getReportCategorySales(): Promise<CategorySales[]> {
+    const response = await api.get<CategorySales[]>('/reports/categorySales');
+    return response.data;
+}
+
+// reporte de ventas por producto
+export async function getReportProductSales(): Promise<ProductSales[]> {
+    const response = await api.get<ProductSales[]>('/reports/topProducts');
+    return response.data;
+}

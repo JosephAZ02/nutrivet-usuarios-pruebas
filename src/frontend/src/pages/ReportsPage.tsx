@@ -7,7 +7,7 @@ import { exportCsv } from "../utils/exportCsv";
 import { exportPdf } from "../utils/exportPdf";
 import Button from "../components/atoms/Button";
 import { Route } from "react-router-dom";
-import Chart from "../utils/chart";
+import Chart from "../utils/Chart";
 
 <Route path="/reportes" element={<ReportsPage />} />
 
