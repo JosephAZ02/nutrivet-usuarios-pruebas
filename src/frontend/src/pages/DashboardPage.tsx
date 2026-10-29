@@ -1,4 +1,5 @@
 // src/pages/DashboardPage.tsx
+import Button from '../components/atoms/Button';
 import { useAuth } from '../context/AuthContext';
 
 export default function DashboardPage() {
@@ -11,9 +12,9 @@ export default function DashboardPage() {
             <p>Desde aquí puedes acceder a todas las funcionalidades del sistema.</p>
 
 
-      <button className="btn btn-danger" onClick={logout}>
+      <Button className="btn btn-outline-danger flex-grow-1" onClick={logout}>
         Cerrar Sesión
-      </button>
+      </Button>
     </div>
   );
 }
