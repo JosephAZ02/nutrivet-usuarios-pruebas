@@ -6,6 +6,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 import RouteProtection from './components/organism/RouteProtection';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import ReportsPage from './pages/ReportsPage';
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
 
 
         <Route path="*" element={<Navigate to="/login" replace />} />
-
+        <Route path="/reportes" element={<ReportsPage />} />
       </Routes>
     </BrowserRouter>
   );

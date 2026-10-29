@@ -1,8 +1,7 @@
 
-const url = 'http://localhost:8080/api/reports';
-const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbjIiLCJpYXQiOjE3OTMyMTk2NDEsImV4cCI6MTc5MzI1NTY0MX0.0sWNgIWhFw0tzNqYFM0Se3fL2zK2bKZKcssPR-ki_QI";
+import api from './Api';
 
-interface CategorySales {
+export interface CategorySales {
     category: string;
     total: number;
 }
@@ -13,7 +12,7 @@ export interface MonthlyIncome {
     cantInvoices: number;
 }
 
-interface ProductSales {
+export interface ProductSales {
     position: string;
     product: string;
     category: string;
@@ -21,39 +20,20 @@ interface ProductSales {
     income: number;
 }
 
-//obtener el reporte de ingresos mensuales
+// reporte de ingresos mensuales
 export async function getReportMonthlyIncome(): Promise<MonthlyIncome[]> {
-    try {
-        const result = await fetch(url + "/monthlyIncome", {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        const data = await result.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching monthly income report:", error);
-        throw error;
-    }
-}
-//obtener el reporte de ventas por categoría
-export async function getReportCategorySales(): Promise<CategorySales[]> {
-    const result = await fetch(url + "/categorySales", {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    const data = await result.json();
-    return data;
+    const response = await api.get<MonthlyIncome[]>('/reports/monthlyIncome');
+    return response.data;
 }
 
-//obtener el reporte de ventas por producto
+// reporte de ventas por categoría
+export async function getReportCategorySales(): Promise<CategorySales[]> {
+    const response = await api.get<CategorySales[]>('/reports/categorySales');
+    return response.data;
+}
+
+// reporte de ventas por producto
 export async function getReportProductSales(): Promise<ProductSales[]> {
-    const result = await fetch(url + "/topProducts", {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-    const data = await result.json();
-    return data;
+    const response = await api.get<ProductSales[]>('/reports/topProducts');
+    return response.data;
 }
