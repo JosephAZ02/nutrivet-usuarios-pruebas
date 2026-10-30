@@ -7,3 +7,9 @@ export interface LoginRequest {
 export interface AuthResponse {
   token: string;
 }
+
+export interface RecoverPasswordRequest {
+  username: string;
+  masterKey: string;
+  newPassword: string;
+}

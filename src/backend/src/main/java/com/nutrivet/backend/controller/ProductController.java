@@ -11,11 +11,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.nutrivet.backend.domain.Product;
 import com.nutrivet.backend.service.ProductService;
 
@@ -106,32 +107,67 @@ public class ProductController {
         }
     }
 
-    @PostMapping("/add")
+    @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('PRODUCT_CREATE')")
-    public ResponseEntity<?> addProduct(@RequestBody Product product) {
+    public ResponseEntity<?> addProduct(@RequestPart("product") Product product,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
-            productService.add(product);
-            return ResponseEntity.status(HttpStatus.CREATED).body("El producto fue agregado exitosamente");
+            Product savedProduct = productService.add(product, image);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Error al agregar el producto: " + e.getMessage());
         }
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
-    public ResponseEntity<String> updateProduct(@PathVariable int id, @RequestBody Product product) {
+    public ResponseEntity<?> updateProduct(@PathVariable int id, @RequestPart("product") Product product, @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "removeImage", defaultValue = "false") boolean removeImage) {
         try {
-            productService.update(id, product);
-            return ResponseEntity.ok("El producto fue actualizado exitosamente");
+            Product updatedProduct = productService.update(id, product, image, removeImage);
+            return ResponseEntity.ok(updatedProduct);
         } catch (RuntimeException e) {
             if ("El producto no existe".equals(e.getMessage())) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Error al actualizar el producto: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error al actualizar el producto: " + e.getMessage());
         }
     }
+
+    /*
+     * @PostMapping("/add")
+     * 
+     * @PreAuthorize("hasAuthority('PRODUCT_CREATE')")
+     * public ResponseEntity<?> addProduct(@RequestBody Product product) {
+     * try {
+     * productService.add(product);
+     * return ResponseEntity.status(HttpStatus.CREATED).
+     * body("El producto fue agregado exitosamente");
+     * } catch (RuntimeException e) {
+     * return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+     * .body("Error al agregar el producto: " + e.getMessage());
+     * }
+     * }
+     * 
+     * 
+     * @PutMapping("/update/{id}")
+     * 
+     * @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
+     * public ResponseEntity<String> updateProduct(@PathVariable int
+     * id, @RequestBody Product product) {
+     * try {
+     * productService.update(id, product);
+     * return ResponseEntity.ok("El producto fue actualizado exitosamente");
+     * } catch (RuntimeException e) {
+     * if ("El producto no existe".equals(e.getMessage())) {
+     * return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+     * }
+     * return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+     * .body("Error al actualizar el producto: " + e.getMessage());
+     * }
+     * }
+     */
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('PRODUCT_DELETE')")

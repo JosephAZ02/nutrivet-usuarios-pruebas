@@ -32,30 +32,30 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 1. Buscamos al usuario
+        
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-        // 2. Buscamos los permisos asociados al rol de ese usuario
+        
         List<RolePermission> rolePermissions = rolePermissionRepository.findByIdRole(user.getIdRole());
 
-        // 3. Extraemos los IDs de los permisos
+        
         List<Integer> permissionIds = new ArrayList<>();
         for (RolePermission rp : rolePermissions) {
             permissionIds.add(rp.getIdPermission());
         }
 
-        // 4. Buscamos la información completa de esos permisos
+        
         List<Permission> permissions = permissionRepository.findAllById(permissionIds);
 
-        // 5. Convertimos los permisos al formato que entiende Spring Security
+      
         List<GrantedAuthority> authorities = new ArrayList<>();
         for (Permission permission : permissions) {
-            // Ejemplo: "PRODUCT_READ", "PRODUCT_CREATE"
+            
             authorities.add(new SimpleGrantedAuthority(permission.getName()));
         }
 
-        // 6. Retornamos el usuario de Spring Security
+        
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Button from '../components/atoms/Button';
 
 export default function LoginPage() {
     const [username, setUsername] = useState('');
@@ -39,7 +40,7 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit}>
                     <div className="mb-3">
-                        <label className="form-label">Usuario</label>
+                        <label style={{ fontWeight: 'bold' , color: '#000000' }} className="form-label">Usuario</label>
                         <input
                             type="text"
                             className="form-control"
@@ -49,7 +50,7 @@ export default function LoginPage() {
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="form-label">Contraseña</label>
+                        <label style={{ fontWeight: 'bold' , color: '#000000' }} className="form-label">Contraseña</label>
                         <input
                             type="password"
                             className="form-control"
@@ -61,13 +62,13 @@ export default function LoginPage() {
                             ¿Olvidaste tu contraseña?
                         </a>
                     </div>
-                    <button
+                    <Button
                         type="submit"
                         className="btn btn-success w-100"
                         disabled={loading}
                     >
                         {loading ? 'Ingresando...' : 'Iniciar Sesión'}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>
