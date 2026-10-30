@@ -1,0 +1,23 @@
+button {
+    font-size: 14px;
+    font-weight: 300;
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+
+}
+
+.tab-button.tab-active {
+    box-shadow: inset 0 -2px 0 #1f9d6b;
+    font-weight: bold;
+}
+
+.tabs-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    margin: 20px;
+
+
+}

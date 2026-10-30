@@ -6,10 +6,9 @@ import ReportResults from "../components/organism/ReportResults";
 import { exportCsv } from "../utils/exportCsv";
 import { exportPdf } from "../utils/exportPdf";
 import Button from "../components/atoms/Button";
-import { Route } from "react-router-dom";
 import Chart from "../utils/Chart";
-
-<Route path="/reportes" element={<ReportsPage />} />
+import BartChar from "../utils/BarChart";
+import "./ReportsPage.css";
 
 function ReportsPage() {
     const [activeReport, setActiveReport] = useState<ReportType>("ventas-categoria");
@@ -29,6 +28,8 @@ function ReportsPage() {
 
     useEffect(() => {
         setError("");
+        setRows([]);
+        setHeaders([]);
         let cancelled = false;
         setLoading(true);
 
@@ -87,35 +88,84 @@ function ReportsPage() {
     };
 
     return (
+
         <div className="reports-page">
-
-            <ReportTabs activeReport={activeReport} onReportChange={setActiveReport} />
-            <div className="report-export-actions">
-                <div className="title-section">
-                    <span >AÑO ACTUAL</span>
-                    <h2>{titles[activeReport]}</h2>
-
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 16,
+                    padding: "20px 20px 0",
+                    marginBottom: 40,
+                }}
+            >
+                <div >
+                    <h2 style={{ margin: 0, textAlign: "left", fontWeight: "bold" }}>
+                        Reportes y estadísticas
+                    </h2>
+                    <h3 style={{
+                        textAlign: "left", fontWeight: 400, fontSize: 16, color: "#6b7a74"
+                    }}>
+                        Resumen del año {new Date().getFullYear()}
+                    </h3>
                 </div>
 
-
-                <div className="report-actions-container">
+                <div style={{ display: "flex", gap: 10 }}>
                     <Button type="button" onClick={handleExportCsv} disabled={loading || rows.length === 0}>
+                        <i className="bi bi-download me-2" aria-hidden="true"></i>
                         Exportar CSV
                     </Button>
-                    <Button type="button" onClick={handleExportPdf} disabled={loading || rows.length === 0}>
+                    <Button type="button" variant="secondary" onClick={handleExportPdf} disabled={loading || rows.length === 0}>
+                        <i className="bi bi-printer me-2" aria-hidden="true"></i>
                         Exportar PDF
                     </Button>
-                    <div className="reports-chart">
-                        <Chart data={activeReport === "productos-mas-vendidos" ? rows.slice(0, 5).map((row) => ({ label: row[1], value: Number(row[3]) })) : rows.map((row) => ({ label: row[0], value: Number(row[1]) }))} type={activeReport === "ingresos-mensuales" ? "vertical" : "horizontal"} currency={activeReport !== "productos-mas-vendidos"} />
-                    </div>
                 </div>
-                {loading && <p>Cargando datos...</p>}
-                {error && <p>{error}</p>}
-                {!loading && !error && (
-                    <ReportResults title={titles[activeReport]} headers={headers} rows={rows} />
-                )}
             </div>
+
+            <ReportTabs activeReport={activeReport} onReportChange={setActiveReport} />
+
+
+
+
+            <div className={"card title-section"}>
+                <h2>{activeReport == "productos-mas-vendidos" ? "Resumen de ingresos" : titles[activeReport]}</h2>
+                <p>Resumen de los datos del año {new Date().getFullYear()}</p>
+                <p>actualizados al {new Date().toLocaleDateString("es-CR")}, {new Date().toLocaleTimeString("es-CR")}</p>
+            </div>
+
+
+
+            <div className="report-actions-container">
+
+                {activeReport === "productos-mas-vendidos" ? (
+
+                    <BartChar
+                        title={titles[activeReport]}
+                        subtitle="Unidades vendidas por producto"
+                        data={rows.slice(0, 5).map((row) => ({
+                            label: String(row[1]),
+                            value: Number(row[3]),
+                        }))}
+                    />
+
+                ) : (
+                    <div className="reports-chart">
+                        <Chart data={rows.map((row) => ({ label: row[0], value: Number(row[1]) }))} type={activeReport === "ingresos-mensuales" ? "vertical" : "horizontal"} />
+                    </div>
+                )}
+
+
+            </div>
+            {loading && <p>Cargando datos...</p>}
+            {error && <p>{error}</p>}
+            {!loading && !error && (
+                <ReportResults title={titles[activeReport]} headers={headers} rows={rows} />
+            )}
         </div>
+
+
     );
 }
 

@@ -7,6 +7,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import RouteProtection from './components/organism/RouteProtection';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ReportsPage from './pages/ReportsPage';
+import AppLayout from './components/templates/AppLayout';
 
 function App() {
   return (
@@ -17,10 +18,10 @@ function App() {
 
 
         <Route element={<RouteProtection />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-
-
-
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/reportes" element={<ReportsPage />} />
+          </Route>
         </Route>
 
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -30,7 +31,6 @@ function App() {
 
 
         <Route path="*" element={<Navigate to="/login" replace />} />
-        <Route path="/reportes" element={<ReportsPage />} />
       </Routes>
     </BrowserRouter>
   );
