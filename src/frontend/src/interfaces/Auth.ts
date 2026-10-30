@@ -6,6 +6,7 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   token: string;
+  permissions: string[];
 }
 
 export interface RecoverPasswordRequest {

@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./SideBar.css";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -10,7 +10,7 @@ function SideBar() {
 
     const navigate = useNavigate();
     const [activeItem, setActiveItem] = useState("");
-    const { logout } = useAuth();
+    const { logout, hasPermission } = useAuth();
     
     return (
         <div className="d-flex flex-column flex-shrink-0  text-bg-dark align-items-left" id="sidebar">
@@ -49,6 +49,14 @@ function SideBar() {
                         <i className="bi bi-file-earmark-bar-graph me-2" aria-hidden="true"></i>
                         Reportes
                     </Button>
+                </li>
+                <li>
+                    {hasPermission("USER_CREATE") && (
+                        <Button className={activeItem === "roles-usuarios" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/roles-users"); setActiveItem("roles-usuarios"); }} >
+                            <i className="bi bi-person me-2" aria-hidden="true"></i>
+                            Roles y Usuarios
+                        </Button>
+                    )}
                 </li>
             </ul>
 
