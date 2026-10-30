@@ -1,34 +1,38 @@
+import api from "./Api";
+import type ProductCategory from "../interfaces/ProductCategory";
 
-import api from './Api';
-import type ProductCategory from '../interfaces/ProductCategory';
+// obtener categorías
+export async function getAllProductCategories(): Promise<ProductCategory[]> {
+  const response = await api.get<ProductCategory[]>("/productCategory/all");
+  return response.data;
+}
 
-export const ProductCategoryService = {
-  getAll: async (): Promise<ProductCategory[]> => {
-    const response = await api.get('/productCategory/all');
-    return response.data;
-  },
+// obtener por id
+export async function getProductCategoryById(id: number): Promise<ProductCategory> {
+  const response = await api.get<ProductCategory>(`/productCategory/get/${id}`);
+  return response.data;
+}
 
-  create: async (name: string) => {
-    const response = await api.post('/productCategory/add', new URLSearchParams({ name }), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
-    return response.status === 200 || response.status === 201;
-  },
+// obtener las categorías activas
+export async function getActiveProductCategories(): Promise<ProductCategory[]> {
+  const response = await api.get<ProductCategory[]>("/productCategory/active");
+  return response.data;
+}
 
-  getById: async (productCategoryId: number): Promise<ProductCategory> => {
-    const response = await api.get(`/productCategory/get/${productCategoryId}`);
-    return response.data;
-  },
+// crear categoría
+export async function addProductCategory(category: Omit<ProductCategory, "id">): Promise<string> {
+  const response = await api.post<string>("/productCategory/add", category);
+  return response.data;
+}
 
-  update: async (productCategoryId: number, name: string) => {
-    const response = await api.put(`/productCategory/update/${productCategoryId}`, new URLSearchParams({ name }), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
-    return response.status === 200;
-  },
+// actualizar categoría
+export async function updateProductCategory(id: number, category: Omit<ProductCategory, "id">): Promise<string> {
+  const response = await api.put<string>(`/productCategory/update/${id}`,category);
+  return response.data;
+}
 
-  delete: async (productCategoryId: number) => {
-    const response = await api.delete(`/productCategory/delete/${productCategoryId}`);
-    return response.status === 200;
-  }
-};
+// desactivar categoría
+export async function deactivateProductCategory(id: number): Promise<string> {
+  const response = await api.delete<string>(`/productCategory/delete/${id}`);
+  return response.data;
+}
