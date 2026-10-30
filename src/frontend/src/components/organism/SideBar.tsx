@@ -1,6 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import "./SideBar.css";
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 
 
@@ -8,7 +9,8 @@ function SideBar() {
 
     const navigate = useNavigate();
     const [activeItem, setActiveItem] = useState("");
-
+    const { logout } = useAuth();
+    
     return (
         <div className="d-flex flex-column flex-shrink-0  text-bg-dark align-items-left" id="sidebar">
             <a id="title" href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
@@ -30,7 +32,7 @@ function SideBar() {
                     </a>
                 </li>
                 <li>
-                    <a className={activeItem === "productos" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/productos"); setActiveItem("productos"); }} >
+                    <a className={activeItem === "productos" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/products"); setActiveItem("productos"); }} >
                         <i className="bi bi-box-seam me-2" aria-hidden="true"></i>
                         Productos
                     </a>
@@ -42,7 +44,7 @@ function SideBar() {
                     </a>
                 </li>
                 <li>
-                    <a className={activeItem === "reportes" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/reportes"); setActiveItem("reportes"); }} >
+                    <a className={activeItem === "reportes" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/reports"); setActiveItem("reportes"); }} >
                         <i className="bi bi-file-earmark-bar-graph me-2" aria-hidden="true"></i>
                         Reportes
                     </a>
@@ -57,7 +59,9 @@ function SideBar() {
                 </a>
                 <ul className="dropdown-menu dropdown-menu-dark text-small shadow ">
 
-                    <li><a className="dropdown-item" href="#">Cerrar sesión</a></li>
+                    <li><a className="dropdown-item" href="#" onClick={logout}>
+                        Cerrar sesión
+                    </a></li>
                 </ul>
             </div>
         </div>
