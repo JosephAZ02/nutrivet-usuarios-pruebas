@@ -4,6 +4,8 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ProductsPage from './pages/ProductsPage';
+import InventoryPage from './pages/InventoryPage';
+import NewSalePage from './pages/NewSalePage';
 
 import RouteProtection from './components/organism/RouteProtection';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -23,6 +25,8 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/products" element={<ProductsPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/new-sale" element={<NewSalePage />} />
           </Route>
         </Route>
 
