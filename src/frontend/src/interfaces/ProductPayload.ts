@@ -22,3 +22,14 @@ export interface ProductUpdatePayload {
   transportCost: number;
   bulkSale: boolean;
 }
+
+export interface ProductForm {
+    code: string;
+    name: string;
+    category: { id: number };
+    unitPrice: number | "";
+    productAmount: number | "";
+    productCost: number | "";
+    transportCost: number | "";
+    bulkSale: boolean;
+}
