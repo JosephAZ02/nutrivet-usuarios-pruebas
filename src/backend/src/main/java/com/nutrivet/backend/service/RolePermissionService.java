@@ -1,32 +1,33 @@
 package com.nutrivet.backend.service;
 
-import java.util.List;
-import java.util.Optional;
-import org.springframework.stereotype.Service;
 import com.nutrivet.backend.domain.RolePermission;
 import com.nutrivet.backend.repository.RolePermissionRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class RolePermissionService {
 
-    private final RolePermissionRepository rolePermissionRepository;
-    public RolePermissionService(RolePermissionRepository rolePermissionRepository) {
-        this.rolePermissionRepository = rolePermissionRepository;
-    }
+    @Autowired 
+    private RolePermissionRepository rolePermissionRepository;
 
-    public List<RolePermission> getAll() {
-        return rolePermissionRepository.findAll();
-    }
+    @Transactional
+    public void updateRolePermissions(int roleId, List<Integer> permissionIds) {
 
-    public Optional<RolePermission> getById(Integer id) {
-        return rolePermissionRepository.findById(id);
-    }
+        List<RolePermission> currentPermissions = rolePermissionRepository.findByIdRole(roleId);
+        rolePermissionRepository.deleteAll(currentPermissions);
 
-    public RolePermission add(RolePermission rolePermission) {
-        return rolePermissionRepository.save(rolePermission);
-    }
-
-    public void deleteById(Integer id) {
-        rolePermissionRepository.deleteById(id);
+        if (permissionIds != null && !permissionIds.isEmpty()) {
+            for (Integer permissionId : permissionIds) {
+                RolePermission newRp = new RolePermission();
+                newRp.setIdRole(roleId);
+                newRp.setIdPermission(permissionId);
+                rolePermissionRepository.save(newRp);
+            }
+        }
     }
 }

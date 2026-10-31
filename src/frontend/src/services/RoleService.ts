@@ -1,6 +1,4 @@
-
-
-import api from "./Api";
+import api from './Api';
 
 export interface RoleResponse {
     id: number;
