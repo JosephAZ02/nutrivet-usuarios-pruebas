@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 import type Product from "../interfaces/Product";
 import type ProductCategory from "../interfaces/ProductCategory";
 import type CartItem from "../interfaces/CartItem";
+import type { PaymentMethod, SaleRequest } from "../interfaces/Sale";
 import { getAllProducts } from "../services/ProductService";
 import { getActiveProductCategories } from "../services/ProductCategoryService";
-import { showError } from "../utils/alerts";
+import { createSale } from "../services/SaleService";
+import { showError, showSuccess } from "../utils/alerts";
 import { formatCurrency } from "../utils/formatCurrency";
+import Button from "../components/atoms/Button";
 import ProductSearchBar from "../components/molecules/ProductSearchBar";
 import CategoryFilter from "../components/molecules/CategoryFilter";
 import ProductCard from "../components/molecules/ProductCard";
 import CartRow from "../components/molecules/CartRow";
+import PaymentSummary from "../components/molecules/PaymentSummary";
 
 export default function NewSalePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -17,6 +21,9 @@ export default function NewSalePage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
+  const [amountReceived, setAmountReceived] = useState("");
+  const [saving, setSaving] = useState(false);
 
   // al abrir la pantalla se cargan los productos y las categorías
   useEffect(() => {
@@ -32,6 +39,16 @@ export default function NewSalePage() {
     loadData();
   }, []);
 
+  // vuelve a pedir los productos para que el catálogo muestre el stock actualizado
+  async function refreshProducts() {
+    try {
+      const productList = await getAllProducts();
+      setProducts(productList.filter((p) => p.productAmount > 0));
+    } catch (err: any) {
+      showError(err, "No se pudieron cargar los productos");
+    }
+  }
+
   // productos que se ven según la categoría elegida y el texto del buscador
   const text = searchText.trim().toLowerCase();
   const visibleProducts = products.filter((p) => {
@@ -46,6 +63,10 @@ export default function NewSalePage() {
     total = total + item.product.unitPrice * item.quantity;
   }
 
+  // se puede cobrar si hay productos y, en efectivo, el monto recibido alcanza
+  const cashIsEnough = amountReceived !== "" && Number(amountReceived) >= total;
+  const canPay = cart.length > 0 && (paymentMethod === "TARJETA" || cashIsEnough);
+
   // agrega el producto al detalle, o le suma una unidad si ya estaba
   function handleAdd(product: Product) {
     const existing = cart.find((item) => item.product.id === product.id);
@@ -57,7 +78,7 @@ export default function NewSalePage() {
     }
   }
 
-  // cambia la cantidad de una línea; si llega a 0 la quita del detalle
+  // cambia la cantidad de una línea, si llega a 0 la quita del detalle
   function handleQuantityChange(product: Product, quantity: number) {
     if (quantity <= 0) {
       setCart(cart.filter((item) => item.product.id !== product.id));
@@ -69,6 +90,31 @@ export default function NewSalePage() {
   // vacía el detalle de venta
   function handleClear() {
     setCart([]);
+    setAmountReceived("");
+  }
+
+  // registra la venta en el backend
+  async function handleCompleteSale() {
+    setSaving(true);
+
+    try {
+      const request: SaleRequest = {
+        paymentMethod: paymentMethod,
+        amountReceived: paymentMethod === "EFECTIVO" ? Number(amountReceived) : null,
+        items: cart.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+      };
+
+      const invoice = await createSale(request);
+      showSuccess("Venta registrada", `Factura ${invoice.number}`);
+      setCart([]);
+      setAmountReceived("");
+    } catch (err: any) {
+      showError(err, "No se pudo registrar la venta");
+    } finally {
+      setSaving(false);
+    }
+
+    refreshProducts(); // si el stock cambió (o pudo haber cambiado), se actualiza el catálogo
   }
 
   // pendiente: aquí se agregará por código de barras al presionar Enter
@@ -129,6 +175,21 @@ export default function NewSalePage() {
               <span>Total</span>
               <strong className="fs-4">{formatCurrency(total)}</strong>
             </div>
+
+            <div className="mt-3">
+              <PaymentSummary
+                total={total}
+                paymentMethod={paymentMethod}
+                onMethodChange={setPaymentMethod}
+                amountReceived={amountReceived}
+                onAmountChange={setAmountReceived}
+              />
+            </div>
+
+            <Button variant="success" className="w-100 d-flex justify-content-between mt-3" disabled={!canPay || saving} onClick={handleCompleteSale}>
+              <span>{saving ? "Registrando..." : "Completar venta"}</span>
+              <span>{formatCurrency(total)}</span>
+            </Button>
           </div>
         </div>
 

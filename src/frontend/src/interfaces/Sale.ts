@@ -4,9 +4,11 @@ export interface SaleItemRequest {
   quantity: number;
 }
 
+export type PaymentMethod = "EFECTIVO" | "TARJETA";
+
 export interface SaleRequest {
-  paymentMethod: "EFECTIVO" | "TARJETA";
-  amountReceived: number | null; // solo se usa en efectivo para calcular el vuelto
+  paymentMethod: PaymentMethod;
+  amountReceived: number | null; // solo se usa en efectivo
   items: SaleItemRequest[];
 }
 
