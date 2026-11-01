@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.nutrivet.backend.domain.User;
+import com.nutrivet.backend.dto.UpdateUserRequest;
 import com.nutrivet.backend.domain.RegisterRequest;
 import com.nutrivet.backend.service.UserService;
 
@@ -17,6 +18,7 @@ public class UserController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+
     public UserController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
@@ -51,10 +53,26 @@ public class UserController {
         }
     }
 
-    @PutMapping("/update")
-    @PreAuthorize("hasAuthority('USER_UPDATE')")
-    public User updateUser(@RequestBody User user) {
-        return userService.add(user);
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAuthority('USER_CREATE')")
+    public ResponseEntity<?> updateUser(@PathVariable int id, @RequestBody UpdateUserRequest request) {
+        try {
+            User user = userService.getById(id)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            user.setName(request.getName());
+            user.setUsername(request.getUsername());
+            user.setIdRole(request.getRoleId());
+
+            if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+            }
+
+            userService.add(user);
+            return ResponseEntity.ok("Usuario actualizado correctamente");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al actualizar: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete/{id}")
@@ -64,7 +82,7 @@ public class UserController {
         try {
             if (id == 1) {
                 return ResponseEntity.badRequest().body("Error: no puede eliminar el usuario principal");
-                
+
             }
             userService.deleteById(id);
 
@@ -76,4 +94,3 @@ public class UserController {
 
     }
 }
-    
