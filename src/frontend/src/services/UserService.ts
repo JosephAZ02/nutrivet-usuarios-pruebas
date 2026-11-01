@@ -19,5 +19,14 @@ export const UserService = {
     create: async (userData: any) => {
         const response = await api.post('/user/add', userData);
         return response.data;
+    },
+
+    update: async (id: number, userData: any) => {
+        const response = await api.put(`/user/update/${id}`, userData);
+        return response.data;
+    },
+    delete: async (id: number) => {
+        const response = await api.delete(`/user/delete/${id}`);
+        return response.data;
     }
 };
