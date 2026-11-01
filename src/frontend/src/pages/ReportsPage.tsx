@@ -138,9 +138,12 @@ function ReportsPage() {
 
 
             <div className="report-actions-container">
-
-                {activeReport === "productos-mas-vendidos" ? (
-
+                {loading ? (
+                    <div className="d-flex flex-column justify-content-center align-items-center gap-2 w-100" role="status" aria-live="polite">
+                        <div className="spinner-border text-primary" aria-hidden="true"></div>
+                        <span className="text-primary">Cargando datos...</span>
+                    </div>
+                ) : activeReport === "productos-mas-vendidos" ? (
                     <BartChar
                         title={titles[activeReport]}
                         subtitle="Unidades vendidas por producto"
@@ -149,16 +152,12 @@ function ReportsPage() {
                             value: Number(row[3]),
                         }))}
                     />
-
                 ) : (
                     <div className="reports-chart">
                         <Chart data={rows.map((row) => ({ label: row[0], value: Number(row[1]) }))} type={activeReport === "ingresos-mensuales" ? "vertical" : "horizontal"} />
                     </div>
                 )}
-
-
             </div>
-            {loading && <p>Cargando datos...</p>}
             {error && <p>{error}</p>}
             {!loading && !error && (
                 <ReportResults title={titles[activeReport]} headers={headers} rows={rows} />
