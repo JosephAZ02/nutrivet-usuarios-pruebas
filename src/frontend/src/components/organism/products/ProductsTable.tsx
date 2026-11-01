@@ -3,7 +3,6 @@ import type Product from "../../../interfaces/Product";
 interface ProductsTableProps {
     filteredProducts: Product[];
     currentProducts: Product[];
-    productsPerPage: number;
     currentPage: number;
     totalPages: number;
     indexOfFirstProduct: number;
@@ -11,9 +10,18 @@ interface ProductsTableProps {
     onEdit: (product: Product) => void;
     onDelete: (product: Product) => void;
     onPageChange: (page: number) => void;
+    showInactiveProducts: boolean;
+    onReactivate: (product: Product) => void;
 }
 
-function ProductsTable({filteredProducts,currentProducts,productsPerPage,currentPage,totalPages,onEdit,onDelete,onPageChange}: ProductsTableProps) {
+
+function ProductsTable({ filteredProducts, currentProducts, currentPage, totalPages, onEdit, onDelete, onPageChange, showInactiveProducts, onReactivate }: ProductsTableProps) {
+    const maxVisiblePages = 8;
+
+    const startPage = Math.max(1, Math.min(currentPage - Math.floor(maxVisiblePages / 2), totalPages - maxVisiblePages + 1));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    const pages = Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+
     return (
         <div className="card border-0 shadow-sm rounded-4">
             <div className="table-responsive">
@@ -21,12 +29,12 @@ function ProductsTable({filteredProducts,currentProducts,productsPerPage,current
                     <thead className="table-light">
                         <tr>
                             <th className="ps-4">Producto</th>
-                            <th>Categoría</th>
-                            <th>Costo</th>
-                            <th>Transporte</th>
-                            <th>Precio de venta</th>
-                            <th>Existencias</th>
-                            <th>Estado</th>
+                            <th className="text-center">Categoría</th>
+                            <th className="text-center">Costo</th>
+                            <th className="text-center">Transporte</th>
+                            <th className="text-center">Precio de venta</th>
+                            <th className="text-center">Existencias</th>
+                            <th className="text-center">Estado</th>
                             <th className="text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -71,33 +79,48 @@ function ProductsTable({filteredProducts,currentProducts,productsPerPage,current
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{product.category.name}</td>
-                                        <td>₡{product.productCost.toLocaleString("es-CR")}</td>
-                                        <td>₡{product.transportCost.toLocaleString("es-CR")}</td>
-                                        <td>₡{product.unitPrice.toLocaleString("es-CR")}</td>
-                                        <td>{product.productAmount}</td>
-                                        <td>
+                                        <td className="text-center">{product.category.name}</td>
+                                        <td className="text-center">₡{product.productCost.toLocaleString("es-CR")}</td>
+                                        <td className="text-center">₡{product.transportCost.toLocaleString("es-CR")}</td>
+                                        <td className="text-center">₡{product.unitPrice.toLocaleString("es-CR")}</td>
+                                        <td className="text-center">{product.productAmount}</td>
+                                        <td className="text-center">
                                             <span className={`badge ${stockStatus === "Crítico" ? "bg-danger" : stockStatus === "Bajo"
-                                                    ? "bg-warning text-dark"
-                                                    : "bg-success"
+                                                ? "bg-warning text-dark"
+                                                : "bg-success"
                                                 }`}>
                                                 {stockStatus}
                                             </span>
                                         </td>
                                         <td className="text-center">
-                                            <button
-                                                className="btn btn-sm btn-outline-primary me-2"
-                                                onClick={() => onEdit(product)}
-                                            >
-                                                Editar
-                                            </button>
+                                            {showInactiveProducts ? (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-outline-success"
+                                                    onClick={() => onReactivate(product)}
+                                                >
+                                                    <i className="bi bi-arrow-counterclockwise me-1"></i>
+                                                    Reactivar
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-primary me-2"
+                                                        onClick={() => onEdit(product)}
+                                                    >
+                                                        Editar
+                                                    </button>
 
-                                            <button
-                                                className="btn btn-sm btn-outline-danger"
-                                                onClick={() => onDelete(product)}
-                                            >
-                                                Quitar
-                                            </button>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-danger"
+                                                        onClick={() => onDelete(product)}
+                                                    >
+                                                        Quitar
+                                                    </button>
+                                                </>
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -114,35 +137,49 @@ function ProductsTable({filteredProducts,currentProducts,productsPerPage,current
             </div>
 
             {/* control de paginación */}
-            {filteredProducts.length > productsPerPage && (
-                <div className="d-flex justify-content-center align-items-center flex-wrap gap-3 mt-3">
-    
-                    <div className="d-flex gap-2 justify-content-between align-items-center">
-                        <button 
-                            type="button"
-                            className="btn btn-outline-secondary btn-sm"
-                            disabled={currentPage === 1}
-                            onClick={() => onPageChange(currentPage - 1)}
-                        >
-                            <i className="bi bi-chevron-left me-1"></i>
-                            Anterior
-                        </button>
+            {totalPages > 1 && (
+                <nav aria-label="Paginación de productos" className="py-3">
+                    <ul className="pagination pagination-sm justify-content-center mb-0 flex-wrap">
 
-                        <span className="d-flex align-items-center px-2 fw-semibold">
-                            {currentPage} / {totalPages}
-                        </span>
+                        <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                            <button
+                                type="button"
+                                className="page-link"
+                                disabled={currentPage === 1}
+                                onClick={() => onPageChange(currentPage - 1)}
+                            >
+                                Anterior
+                            </button>
+                        </li>
 
-                        <button 
-                            type="button"
-                            className="btn btn-outline-secondary btn-sm"
-                            disabled={currentPage === totalPages}
-                            onClick={() => onPageChange(currentPage + 1)}
-                        >
-                            Siguiente
-                            <i className="bi bi-chevron-right ms-1"></i>
-                        </button>
-                    </div>
-                </div>
+                        {pages.map(page => (
+                            <li
+                                key={page}
+                                className={`page-item ${currentPage === page ? "active" : ""}`}
+                            >
+                                <button
+                                    type="button"
+                                    className="page-link"
+                                    onClick={() => onPageChange(page)}
+                                >
+                                    {page}
+                                </button>
+                            </li>
+                        ))}
+
+                        <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                            <button
+                                type="button"
+                                className="page-link"
+                                disabled={currentPage === totalPages}
+                                onClick={() => onPageChange(currentPage + 1)}
+                            >
+                                Siguiente
+                            </button>
+                        </li>
+
+                    </ul>
+                </nav>
             )}
         </div>
     );

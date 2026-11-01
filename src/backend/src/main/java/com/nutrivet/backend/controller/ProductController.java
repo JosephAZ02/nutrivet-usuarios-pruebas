@@ -92,6 +92,31 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/inactive")
+    @PreAuthorize("hasAuthority('PRODUCT_GET_ALL')")
+    public ResponseEntity<?> getInactiveProducts() {
+        try {
+            return ResponseEntity.ok(productService.getInactiveProducts());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al consultar los productos desactivados");
+        }
+    }
+
+    @PutMapping("/reactivate/{id}")
+    @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
+    public ResponseEntity<?> reactivateProduct(@PathVariable Integer id) {
+        try {
+            Product product = productService.reactivate(id);
+            return ResponseEntity.ok(product);
+        } catch (RuntimeException e) {
+            if ("El producto no existe".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/get/{id}")
     @PreAuthorize("hasAuthority('PRODUCT_GET_BY_ID')")
     public ResponseEntity<?> getProductById(@PathVariable int id) {
@@ -122,7 +147,8 @@ public class ProductController {
 
     @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
-    public ResponseEntity<?> updateProduct(@PathVariable int id, @RequestPart("product") Product product, @RequestParam(value = "image", required = false) MultipartFile image,
+    public ResponseEntity<?> updateProduct(@PathVariable int id, @RequestPart("product") Product product,
+            @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "removeImage", defaultValue = "false") boolean removeImage) {
         try {
             Product updatedProduct = productService.update(id, product, image, removeImage);
@@ -134,40 +160,6 @@ public class ProductController {
             return ResponseEntity.badRequest().body("Error al actualizar el producto: " + e.getMessage());
         }
     }
-
-    /*
-     * @PostMapping("/add")
-     * 
-     * @PreAuthorize("hasAuthority('PRODUCT_CREATE')")
-     * public ResponseEntity<?> addProduct(@RequestBody Product product) {
-     * try {
-     * productService.add(product);
-     * return ResponseEntity.status(HttpStatus.CREATED).
-     * body("El producto fue agregado exitosamente");
-     * } catch (RuntimeException e) {
-     * return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-     * .body("Error al agregar el producto: " + e.getMessage());
-     * }
-     * }
-     * 
-     * 
-     * @PutMapping("/update/{id}")
-     * 
-     * @PreAuthorize("hasAuthority('PRODUCT_UPDATE')")
-     * public ResponseEntity<String> updateProduct(@PathVariable int
-     * id, @RequestBody Product product) {
-     * try {
-     * productService.update(id, product);
-     * return ResponseEntity.ok("El producto fue actualizado exitosamente");
-     * } catch (RuntimeException e) {
-     * if ("El producto no existe".equals(e.getMessage())) {
-     * return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-     * }
-     * return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-     * .body("Error al actualizar el producto: " + e.getMessage());
-     * }
-     * }
-     */
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('PRODUCT_DELETE')")

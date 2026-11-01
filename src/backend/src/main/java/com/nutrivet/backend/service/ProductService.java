@@ -71,6 +71,10 @@ public class ProductService {
         return productRepository.findByActiveTrue();
     }
 
+    public List<Product> getInactiveProducts() {
+        return productRepository.findByActiveFalse();
+    }
+
     public Optional<Product> getById(Integer id) {
         return productRepository.findById(id).filter(Product::isActive);
     }
@@ -82,51 +86,6 @@ public class ProductService {
         return productRepository.findById(id);
     }
 
-    /*
-     * public Product add(Product product) {
-     * validateProduct(product);
-     * if (product.getProductAmount() < 0) {
-     * throw new RuntimeException("La cantidad no puede ser negativa");
-     * }
-     * String code = product.getCode().trim();
-     * 
-     * if (productRepository.existsByCodeIgnoreCase(code)) {
-     * throw new RuntimeException("Ya existe un producto con ese código");
-     * }
-     * 
-     * product.setCode(code);
-     * product.setName(product.getName().trim());
-     * 
-     * return productRepository.save(product);
-     * }
-     * 
-     * public Product update(Integer id, Product updatedProduct) {
-     * 
-     * validateProduct(updatedProduct);
-     * 
-     * Product existingProduct = productRepository.findById(id)
-     * .orElseThrow(() -> new RuntimeException("El producto no existe"));
-     * if (!existingProduct.isActive()) {
-     * throw new RuntimeException("No se puede actualizar un producto desactivado");
-     * }
-     * String code = updatedProduct.getCode().trim();
-     * 
-     * if (productRepository.existsByCodeIgnoreCaseAndIdNot(code, id)) {
-     * throw new RuntimeException("Ya existe otro producto con ese código");
-     * }
-     * 
-     * existingProduct.setCode(code);
-     * existingProduct.setName(updatedProduct.getName().trim());
-     * existingProduct.setCategory(updatedProduct.getCategory());
-     * existingProduct.setUnitPrice(updatedProduct.getUnitPrice());
-     * existingProduct.setProductCost(updatedProduct.getProductCost());
-     * existingProduct.setTransportCost(updatedProduct.getTransportCost());
-     * existingProduct.setBulkSale(updatedProduct.isBulkSale());
-     * existingProduct.setPhoto(updatedProduct.getPhoto());
-     * 
-     * return productRepository.save(existingProduct);
-     * }
-     */
     public Product add(Product product) {
         return add(product, null);
     }
@@ -178,7 +137,8 @@ public class ProductService {
 
         validateProduct(updatedProduct);
 
-        Product existingProduct = productRepository.findById(id).orElseThrow(() -> new RuntimeException("El producto no existe"));
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("El producto no existe"));
 
         if (!existingProduct.isActive()) {
             throw new RuntimeException("No se puede actualizar un producto desactivado");
@@ -215,7 +175,7 @@ public class ProductService {
                 try {
                     productImageService.deleteImage(oldImagePath);
                 } catch (RuntimeException cleanupError) {
-                    
+
                 }
             }
             return savedProduct;
@@ -247,6 +207,18 @@ public class ProductService {
 
         product.setActive(false);
         productRepository.save(product);
+    }
+
+    public Product reactivate(Integer id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("El producto no existe"));
+
+        if (product.isActive()) {
+            throw new RuntimeException("El producto ya está activo");
+        }
+
+        product.setActive(true);
+        return productRepository.save(product);
     }
 
     // buscadores
