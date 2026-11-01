@@ -2,6 +2,8 @@ package com.nutrivet.backend.controller;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,11 +22,13 @@ import com.nutrivet.backend.service.PermissionService;
 public class PermissionController {
 
     private final PermissionService permissionService;
+
     public PermissionController(PermissionService permissionService) {
         this.permissionService = permissionService;
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('USER_CREATE')")
     public List<Permission> getAllPermissions() {
         return permissionService.getAll();
     }

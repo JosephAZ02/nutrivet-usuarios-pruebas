@@ -3,11 +3,17 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ProductsPage from './pages/ProductsPage';
+import InventoryPage from './pages/InventoryPage';
+import NewSalePage from './pages/NewSalePage';
+import RolesUsersPage from './pages/RolesUsersPage';
+
 
 import RouteProtection from './components/organism/RouteProtection';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ReportsPage from './pages/ReportsPage';
 import AppLayout from './components/templates/AppLayout';
+import RoutePermission from './components/organism/RoutePermission';
 
 function App() {
   return (
@@ -20,7 +26,15 @@ function App() {
         <Route element={<RouteProtection />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/reportes" element={<ReportsPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/new-sale" element={<NewSalePage />} />
+
+            <Route element={<RoutePermission requiredPermission="USER_CREATE" />}>
+              <Route path="/roles-users" element={<RolesUsersPage />} />
+            </Route>
+            
           </Route>
         </Route>
 
@@ -31,6 +45,7 @@ function App() {
 
 
         <Route path="*" element={<Navigate to="/login" replace />} />
+
       </Routes>
     </BrowserRouter>
   );

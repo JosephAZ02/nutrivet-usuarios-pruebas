@@ -23,12 +23,13 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    @PreAuthorize("hasAuthority('USER_GET_ALL')")
     public List<User> getAllUsers() {
         return userService.getAll();
     }
 
     @GetMapping("/get/{id}")
+    @PreAuthorize("hasAuthority('USER_GET_BY_ID')")
     public Optional<User> getUserById(@PathVariable int id) {
         return userService.getById(id);
     }
