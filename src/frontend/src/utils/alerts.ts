@@ -26,3 +26,12 @@ export function showSuccess(title: string, text: string) {
     confirmButtonText: "Aceptar",
   });
 }
+
+export function showWarning(title: string, text: string) {
+  Swal.fire({
+    icon: "warning",
+    title: title,
+    text: text,
+    confirmButtonText: "Aceptar",
+  });
+}

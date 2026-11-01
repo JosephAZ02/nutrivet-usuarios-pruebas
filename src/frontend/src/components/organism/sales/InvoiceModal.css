@@ -44,3 +44,72 @@
         width: 100%;
     }
 }
+
+/* ---------- ticket de 80 mm ---------- */
+
+/* en pantalla el ticket no se ve */
+#ticket-print {
+    display: none;
+}
+
+/* hoja sin márgenes solo para el ticket (la impresora de tickets ya deja su propio margen) */
+@page ticket {
+    margin: 0;
+}
+
+@media print {
+    /* al imprimir ticket, se oculta la factura grande y se muestra el ticket */
+    body.print-ticket #invoice-print {
+        display: none;
+    }
+
+    body.print-ticket #ticket-print,
+    body.print-ticket #ticket-print * {
+        visibility: visible;
+    }
+
+    body.print-ticket #ticket-print {
+        display: block;
+        page: ticket;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 72mm;
+        box-sizing: border-box;
+        padding: 3mm;
+        font-family: monospace;
+        font-size: 12px;
+        line-height: 1.3;
+        color: #000;
+    }
+
+    .ticket-center {
+        text-align: center;
+    }
+
+    .ticket-small {
+        font-size: 10px;
+    }
+
+    .ticket-line {
+        border: 0;
+        border-top: 1px dashed #000;
+        margin: 6px 0;
+        opacity: 1;
+    }
+
+    .ticket-item {
+        margin-bottom: 4px;
+    }
+
+    .ticket-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .ticket-total {
+        font-weight: bold;
+        font-size: 14px;
+    }
+}
