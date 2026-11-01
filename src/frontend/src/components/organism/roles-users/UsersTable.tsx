@@ -1,5 +1,5 @@
 import type { UserResponse } from "../../../services/UserService";
-import Button from "../../atoms/Button";
+
 
 interface Props {
     users: UserResponse[];
@@ -28,12 +28,12 @@ export default function UsersTable({ users, getRoleName, onEdit, onDelete }: Pro
                             <td><span className="badge bg-secondary">{getRoleName(user.idRole)}</span></td>
                             <td className="text-end">
                                 
-                                <Button className="btn btn-sm btn-danger me-2" onClick={() => onDelete(user)}>
+                                <button className="btn btn-sm btn-outline-danger me-2" onClick={() => onDelete(user)}>
                                     Eliminar
-                                </Button>
-                                <Button className="btn btn-sm btn-warning" onClick={() => onEdit(user)}>
+                                </button>
+                                <button className="btn btn-sm btn-outline-warning" onClick={() => onEdit(user)}>
                                     Editar
-                                </Button>
+                                </button>
                             </td>
                         </tr>
                     ))}

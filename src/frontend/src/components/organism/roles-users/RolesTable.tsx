@@ -1,5 +1,4 @@
 import type { RoleResponse } from "../../../services/RoleService";
-import Button from "../../atoms/Button";
 
 
 interface Props {
@@ -25,12 +24,12 @@ export default function RolesTable({ roles, onManagePermissions, onEditRole }: P
                             <td><strong>{role.name}</strong></td>
                             <td>{role.description}</td>
                             <td className="text-end">
-                                <Button className="btn btn-sm btn-primary me-2" onClick={() => onManagePermissions(role)}>
+                                <button className="btn btn-sm btn-outline-primary me-2" onClick={() => onManagePermissions(role)}>
                                     Permisos
-                                </Button>
-                                <Button className="btn btn-sm btn-warning" onClick={() => onEditRole(role)}>
+                                </button>
+                                <button className="btn btn-sm btn-outline-warning" onClick={() => onEditRole(role)}>
                                     Editar
-                                </Button>
+                                </button>
                             </td>
                         </tr>
                     ))}
