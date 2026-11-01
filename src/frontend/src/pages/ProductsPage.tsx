@@ -23,6 +23,7 @@ function ProductsPage() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStockStatus, setSelectedStockStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 8;
   const [showProductModal, setShowProductModal] = useState(false);
@@ -39,11 +40,21 @@ function ProductsPage() {
   // imagen del producto
   const [productImage, setProductImage] = useState<File | null>(null);
 
-  const filteredProducts = products.filter((product) => {
+
+  //mostrar los productos recien agregados primero y filtrar por busqueda y categoria
+  const filteredProducts = [...products].sort((a, b) => b.id - a.id).filter(product => {
     const search = searchTerm.toLowerCase().trim();
     const matchesSearch = product.name.toLowerCase().includes(search) || product.code.toLowerCase().includes(search);
+
     const matchesCategory = selectedCategory === "all" || product.category.id === Number(selectedCategory);
-    return matchesSearch && matchesCategory;
+
+    const matchesStock =
+      selectedStockStatus === "all" ||
+      (selectedStockStatus === "Crítico" && product.productAmount <= 5) ||
+      (selectedStockStatus === "Bajo" && product.productAmount > 5 && product.productAmount < 20) ||
+      (selectedStockStatus === "Bueno" && product.productAmount >= 20);
+
+    return matchesSearch && matchesCategory && matchesStock;
   });
 
   //paginación
@@ -53,33 +64,30 @@ function ProductsPage() {
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   // cargar estadísticas del inventario
-  useEffect(() => {
-    async function loadInventoryStats() {
-      try {
-        const criticalProducts = await getCriticalStockProducts();
-        setCriticalStockCount(criticalProducts.length);
-      } catch (error) {
-        console.error("Error al cargar el stock crítico:", error);
-      }
-
-      try {
-        const movements = await getAllInventoryMovements();
-        // obtener la fecha actual 
-        const today = new Date();
-        const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
-        // contar solo movimientos de hoy
-        const todayMovements = movements.filter(
-          (movement) => movement.movementDate.slice(0, 10) === todayString
-        );
-        setMovementsTodayCount(todayMovements.length);
-      } catch (error) {
-        console.error("Error al cargar los movimientos:", error);
-      }
+  async function loadInventoryStats() {
+    try {
+      const criticalProducts = await getCriticalStockProducts();
+      setCriticalStockCount(criticalProducts.length);
+    } catch (error) {
+      console.error("Error al cargar el stock crítico:", error);
     }
 
-    loadInventoryStats();
-  }, []);
+    try {
+      const movements = await getAllInventoryMovements();
+
+      const today = new Date();
+      const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+      const todayMovements = movements.filter(
+        (movement) => movement.movementDate.slice(0, 10) === todayString
+      );
+
+      setMovementsTodayCount(todayMovements.length);
+    } catch (error) {
+      console.error("Error al cargar los movimientos:", error);
+    }
+  }
+  useEffect(() => { loadInventoryStats(); }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -103,7 +111,7 @@ function ProductsPage() {
     loadData();
   }, []);
 
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedCategory]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedCategory, selectedStockStatus]);
 
   //handlers para agregar, editar y eliminar productos
   async function handleAddProduct() {
@@ -116,8 +124,8 @@ function ProductsPage() {
       return;
     }
 
-    if (productForm.unitPrice < 0 || productForm.productAmount < 0 || productForm.productCost < 0 || productForm.transportCost < 0) {
-      Swal.fire("Error", "Los valores numéricos no pueden ser negativos.", "error");
+    if (Number(productForm.unitPrice) <= 0 || Number(productForm.productCost) <= 0 || Number(productForm.transportCost) <= 0 || Number(productForm.productAmount) <= 0) {
+      Swal.fire("Error", "El precio de venta, el costo del producto, el transporte y las existencias deben ser mayores que cero.", "error");
       return;
     }
 
@@ -132,8 +140,9 @@ function ProductsPage() {
     }
     try {
       setSavingProduct(true);
-      const productPayload: ProductCreatePayload = {...productForm,unitPrice: Number(productForm.unitPrice),productAmount: Number(productForm.productAmount),
-        productCost: Number(productForm.productCost),transportCost: Number(productForm.transportCost)
+      const productPayload: ProductCreatePayload = {
+        ...productForm, unitPrice: Number(productForm.unitPrice), productAmount: Number(productForm.productAmount),
+        productCost: Number(productForm.productCost), transportCost: Number(productForm.transportCost)
       };
 
       await addProduct(productPayload, productImage);
@@ -145,6 +154,7 @@ function ProductsPage() {
       // actualizar lista de productos
       const updatedProducts = await getAllProducts();
       setProducts(updatedProducts);
+      await loadInventoryStats();
 
       // limpiar formulario
       setProductForm({ code: "", name: "", category: { id: 0 }, unitPrice: 0, productAmount: 0, productCost: 0, transportCost: 0, bulkSale: false });
@@ -158,21 +168,26 @@ function ProductsPage() {
       setSavingProduct(false);
     }
   }
+
+
   function resetProductForm() {
-    setProductForm({code: "",name: "",category: { id: 0 },unitPrice: 0,productAmount: 0,productCost: 0,transportCost: 0,bulkSale: false});
+    setProductForm({ code: "", name: "", category: { id: 0 }, unitPrice: 0, productAmount: 0, productCost: 0, transportCost: 0, bulkSale: false });
     setProductImage(null);
     setEditingProduct(null);
   }
+
   function handleEditProduct(product: Product) {
     setEditingProduct(product);
 
-    setProductForm({code: product.code,name: product.name,category: { id: product.category.id },unitPrice: product.unitPrice,productAmount: product.productAmount,productCost: product.productCost, transportCost: product.transportCost,
+    setProductForm({
+      code: product.code, name: product.name, category: { id: product.category.id }, unitPrice: product.unitPrice, productAmount: product.productAmount, productCost: product.productCost, transportCost: product.transportCost,
       bulkSale: product.bulkSale
     });
 
     setProductImage(null);
     setShowProductModal(true);
   }
+
   async function handleUpdateProduct() {
     if (!editingProduct) return;
 
@@ -185,10 +200,11 @@ function ProductsPage() {
       return;
     }
 
-    if (productForm.unitPrice < 0 || productForm.productCost < 0 || productForm.transportCost < 0) {
-      Swal.fire("Error", "Los valores numéricos no pueden ser negativos.", "error");
+    if (Number(productForm.unitPrice) <= 0 || Number(productForm.productCost) <= 0 || Number(productForm.transportCost) <= 0) {
+      Swal.fire("Error", "El precio de venta, el costo del producto y el transporte deben ser mayores que cero.", "error");
       return;
     }
+
 
     if (productImage && !["image/jpeg", "image/png"].includes(productImage.type)) {
       Swal.fire("Error", "La fotografía debe estar en formato JPG o PNG.", "error");
@@ -200,8 +216,10 @@ function ProductsPage() {
       return;
     }
 
-    const updatePayload: ProductUpdatePayload = {code: productForm.code,name: productForm.name,category: productForm.category,unitPrice: Number(productForm.unitPrice),
-      productCost: Number(productForm.productCost),transportCost: Number(productForm.transportCost),bulkSale: productForm.bulkSale};
+    const updatePayload: ProductUpdatePayload = {
+      code: productForm.code, name: productForm.name, category: productForm.category, unitPrice: Number(productForm.unitPrice),
+      productCost: Number(productForm.productCost), transportCost: Number(productForm.transportCost), bulkSale: productForm.bulkSale
+    };
 
     try {
       setSavingProduct(true);
@@ -210,6 +228,7 @@ function ProductsPage() {
 
       const updatedProducts = await getAllProducts();
       setProducts(updatedProducts);
+      await loadInventoryStats();
       Swal.fire({
         text: 'Producto actualizado exitosamente.',
         icon: 'success',
@@ -243,6 +262,7 @@ function ProductsPage() {
       await deleteProduct(product.id);
       const updatedProducts = await getAllProducts();
       setProducts(updatedProducts);
+      await loadInventoryStats();
       Swal.fire({
         text: 'Producto desactivado exitosamente.',
         icon: 'success',
@@ -255,8 +275,16 @@ function ProductsPage() {
 
 
   async function handleAddCategory() {
-    if (!categoryName.trim()) {
+
+    const trimmedName = categoryName.trim();
+
+    if (!trimmedName) {
       Swal.fire("Error", "Debes ingresar el nombre de la categoría.", "error");
+      return;
+    }
+
+    if (!/^[\p{L}\s'-]+$/u.test(trimmedName)) {
+      Swal.fire("Error", "El nombre de la categoría solo puede contener letras y espacios.", "error");
       return;
     }
 
@@ -288,7 +316,7 @@ function ProductsPage() {
     }
   }
 
-//page
+  //page
   return (
     <div className="products-page">
       <div className="container-fluid p-4">
@@ -369,6 +397,18 @@ function ProductsPage() {
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>{category.name}</option>
                 ))}
+              </select>
+            </div>
+            <div style={{ minWidth: "220px" }}>
+              <select
+                className="form-select"
+                value={selectedStockStatus}
+                onChange={(e) => setSelectedStockStatus(e.target.value)}
+              >
+                <option value="all">Todos los estados</option>
+                <option value="Bueno">Bueno</option>
+                <option value="Bajo">Bajo</option>
+                <option value="Crítico">Crítico</option>
               </select>
             </div>
             <div className="d-flex gap-2 ms-auto">

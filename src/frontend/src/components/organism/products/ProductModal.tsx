@@ -93,7 +93,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                     <input
                                         type="number"
                                         style={{ borderColor: '#000' }}
-                                        min="0"
+                                        min="0.01"
                                         className="form-control"
                                         value={productForm.productAmount}
                                         onChange={(e) => setProductForm({
@@ -108,7 +108,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <input
                                     type="number"
                                     style={{ borderColor: '#000' }}
-                                    min="0"
+                                    min="0.01"
                                     step="0.01"
                                     className="form-control"
                                     value={productForm.productCost}
@@ -122,7 +122,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Costo de transporte (₡)</label>
                                 <input
                                     type="number"
-                                    min="0"
+                                    min="0.01"
                                     style={{ borderColor: '#000' }}
                                     step="0.01"
                                     className="form-control"
@@ -137,7 +137,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Precio de venta (₡)</label>
                                 <input
                                     type="number"
-                                    min="0"
+                                    min="0.01"
                                     style={{ borderColor: '#000' }}
                                     step="0.01"
                                     className="form-control"
