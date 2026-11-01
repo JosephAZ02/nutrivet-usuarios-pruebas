@@ -1,0 +1,46 @@
+/* fondo oscuro detrás de la ventana */
+.invoice-modal {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* al imprimir solo se muestra la factura, no el menú ni el resto de la pantalla */
+@media print {
+    /* evita que el resto de la pantalla (oculto) genere hojas en blanco */
+    html,
+    body {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    #invoice-print,
+    #invoice-print * {
+        visibility: visible;
+    }
+
+    /* la ventana deja de ser flotante para que la factura use toda la hoja */
+    .invoice-modal,
+    .invoice-modal .modal-dialog,
+    .invoice-modal .modal-content,
+    .invoice-modal .modal-body {
+        position: static !important;
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: none !important;
+    }
+
+    #invoice-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}

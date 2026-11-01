@@ -19,12 +19,12 @@ function ProductCard({ product, onAdd }: ProductCardProps) {
                 </div>
             </div>
 
-            <div className="card-body">
+            <div className="card-body d-flex flex-column">
                 <small className="text-success fw-semibold text-uppercase">{product.category.name}</small>
                 <h6 className="mb-0">{product.name}</h6>
                 <small className="text-muted">{product.bulkSale ? "A granel" : product.code}</small>
 
-                <div className="d-flex justify-content-between align-items-center mt-3">
+                <div className="d-flex justify-content-between align-items-center mt-auto pt-3">
                     <strong>{formatCurrency(product.unitPrice)}</strong>
                     <button type="button" className="btn btn-outline-success btn-sm" onClick={() => onAdd(product)} aria-label={`Agregar ${product.name}`}>
                         <i className="bi bi-plus-lg" aria-hidden="true"></i>
