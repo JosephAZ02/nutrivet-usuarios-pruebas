@@ -1,44 +1,65 @@
-
+// src/pages/RolesUsersPage.tsx
 import { useEffect, useState } from 'react';
 import { UserService, type UserResponse } from '../services/UserService';
 import { RoleService, type RoleResponse } from '../services/RoleService';
 import { PermissionService, type PermissionResponse } from '../services/PermissionService';
 import { RolePermissionService } from '../services/RolePermissionService';
 
+import UsersTable from '../components/organism/roles-users/UsersTable';
+import RolesTable from '../components/organism/roles-users/RolesTable';
+import PermissionsModal from '../components/organism/roles-users/PermissionsModals';
+import UserModal from '../components/organism/roles-users/UserModal';
+import RoleModal from '../components/organism/roles-users/RolesModal';
+
 export default function RolesUsersPage() {
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [roles, setRoles] = useState<RoleResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allPermissions, setAllPermissions] = useState<PermissionResponse[]>([]);
 
   const [showModal, setShowModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<RoleResponse | null>(null);
-  const [allPermissions, setAllPermissions] = useState<PermissionResponse[]>([]);
   const [rolePermissions, setRolePermissions] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [savingUser, setSavingUser] = useState(false);
+  const [userMessage, setUserMessage] = useState({ type: '', text: '' });
+  const [userFormData, setUserFormData] = useState({ username: '', password: '', name: '', roleId: 1 });
+
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [isEditingRole, setIsEditingRole] = useState(false);
+  const [editingRoleId, setEditingRoleId] = useState<number | null>(null);
+  const [savingRole, setSavingRole] = useState(false);
+  const [roleMessage, setRoleMessage] = useState({ type: '', text: '' });
+  const [roleFormData, setRoleFormData] = useState({ name: '', description: '' });
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersData, rolesData, permissionsData] = await Promise.all([
-          UserService.getAll(),
-          RoleService.getAll(),
-          PermissionService.getAll()
-        ]);
-        setUsers(usersData);
-        setRoles(rolesData);
-        setAllPermissions(permissionsData);
-      } catch (err) {
-        console.error("Error cargando datos", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
-  const getRoleName = (roleId: number) =>
-    roles.find(role => role.id === roleId)?.name || 'Sin rol';
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [usersData, rolesData, permissionsData] = await Promise.all([
+        UserService.getAll(),
+        RoleService.getAll(),
+        PermissionService.getAll()
+      ]);
+      setUsers(usersData);
+      setRoles(rolesData);
+      setAllPermissions(permissionsData);
+    } catch (err) {
+      console.error("Error cargando datos", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRoleName = (roleId: number) => roles.find(role => role.id === roleId)?.name || 'Sin rol';
 
   const handleManagePermissions = async (role: RoleResponse) => {
     setSelectedRole(role);
@@ -47,32 +68,101 @@ export default function RolesUsersPage() {
       const currentPermissions = await RolePermissionService.getByRole(role.id);
       setRolePermissions(currentPermissions);
       setShowModal(true);
-    } catch (err) {
-      console.error("Error al cargar permisos del rol", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleTogglePermission = (permissionId: number) => {
-    setRolePermissions(current =>
-      current.includes(permissionId)
-        ? current.filter(id => id !== permissionId)
-        : [...current, permissionId]
-    );
+    setRolePermissions(current => current.includes(permissionId) ? current.filter(id => id !== permissionId) : [...current, permissionId]);
   };
 
   const handleSavePermissions = async () => {
     if (!selectedRole) return;
     setSaving(true);
-    setMessage({ type: '', text: '' });
-
     try {
       await RolePermissionService.update(selectedRole.id, rolePermissions);
-      setMessage({ type: 'success', text: 'Permisos actualizados correctamente' });
+      setMessage({ type: 'success', text: 'Permisos actualizados' });
       setTimeout(() => setShowModal(false), 1500);
     } catch (err) {
-      setMessage({ type: 'danger', text: 'Error al guardar los permisos' });
-    } finally {
-      setSaving(false);
+      setMessage({ type: 'danger', text: 'Error al guardar' });
+    } finally { setSaving(false); }
+  };
+
+  const handleOpenCreateRoleModal = () => {
+    setIsEditingRole(false);
+    setEditingRoleId(null);
+    setRoleFormData({ name: '', description: '' });
+    setRoleMessage({ type: '', text: '' });
+    setShowRoleModal(true);
+  };
+
+  const handleOpenEditRoleModal = (role: RoleResponse) => {
+    setIsEditingRole(true);
+    setEditingRoleId(role.id);
+    setRoleFormData({ name: role.name, description: role.description });
+    setRoleMessage({ type: '', text: '' });
+    setShowRoleModal(true);
+  };
+
+  const handleSaveRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingRole(true);
+    try {
+      if (isEditingRole && editingRoleId) {
+        await RoleService.update(editingRoleId, roleFormData);
+      } else {
+        await RoleService.create(roleFormData);
+      }
+      setRoleMessage({ type: 'success', text: 'Guardado exitosamente' });
+      fetchData();
+      setTimeout(() => setShowRoleModal(false), 1500);
+    } catch (err: any) {
+      setRoleMessage({ type: 'danger', text: err.response?.data || 'Error al guardar' });
+    } finally { setSavingRole(false); }
+  };
+
+
+  const handleOpenCreateModal = () => {
+    setIsEditing(false);
+    setEditingUserId(null);
+    setUserFormData({ username: '', password: '', name: '', roleId: roles[0]?.id || 1 });
+    setUserMessage({ type: '', text: '' });
+    setShowUserModal(true);
+  };
+
+  const handleOpenEditModal = (user: UserResponse) => {
+    setIsEditing(true);
+    setEditingUserId(user.id);
+    setUserFormData({ username: user.username, password: '', name: user.name, roleId: user.idRole });
+    setUserMessage({ type: '', text: '' });
+    setShowUserModal(true);
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingUser(true);
+    try {
+      if (isEditing && editingUserId) {
+        await UserService.update(editingUserId, userFormData);
+      } else {
+        await UserService.create(userFormData);
+      }
+      setUserMessage({ type: 'success', text: 'Guardado exitosamente' });
+      fetchData();
+      setTimeout(() => setShowUserModal(false), 1500);
+    } catch (err: any) {
+      setUserMessage({ type: 'danger', text: err.response?.data || 'Error al guardar' });
+    } finally { setSavingUser(false); }
+  };
+
+  const handleDeleteUser = async (user: UserResponse) => {
+    if (!window.confirm(`¿Está seguro de eliminar al usuario ${user.name}?`)) return;
+
+    try {
+      await UserService.delete(user.id);
+      setUserMessage({ type: 'success', text: 'Usuario eliminado exitosamente' });
+      fetchData();
+    } catch (err: any) {
+      setUserMessage({ type: 'danger', text: err.response?.data || 'Error al eliminar usuario' });
     }
   };
 
@@ -85,111 +175,48 @@ export default function RolesUsersPage() {
       <div className="mb-4">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0">Roles y Permisos</h5>
-          <button className="btn btn-success btn-sm">+ Nuevo Rol</button>
+          <button className="btn btn-success btn-sm" onClick={handleOpenCreateRoleModal}>
+            Crear Rol
+          </button>
         </div>
-
-        <div className="table-responsive shadow-sm rounded">
-          <table className="table table-hover align-middle mb-0">
-            <thead className="table-light">
-              <tr>
-                <th>Nombre del Rol</th>
-                <th>Descripción</th>
-                <th className="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.map(role => (
-                <tr key={role.id}>
-                  <td><strong>{role.name}</strong></td>
-                  <td>{role.description}</td>
-                  <td className="text-end">
-                    <button
-                      className="btn btn-sm btn-outline-primary me-2"
-                      onClick={() => handleManagePermissions(role)}
-                    >
-                      Permisos
-                    </button>
-                    <button className="btn btn-sm btn-outline-secondary">
-                      Editar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <RolesTable
+          roles={roles}
+          onManagePermissions={handleManagePermissions}
+          onEditRole={handleOpenEditRoleModal}
+        />
       </div>
+
+      <hr className="my-4" />
 
       <div>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0">Usuarios del Sistema</h5>
-          <button className="btn btn-success btn-sm">+ Nuevo Usuario</button>
+          <button className="btn btn-success btn-sm" onClick={handleOpenCreateModal}>
+            Crear Usuario
+          </button>
         </div>
-
-        <div className="table-responsive shadow-sm rounded">
-          <table className="table table-hover align-middle mb-0">
-            <thead className="table-light">
-              <tr>
-                <th>Nombre Completo</th>
-                <th>Username</th>
-                <th>Rol</th>
-                <th className="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(user => (
-                <tr key={user.id}>
-                  <td><strong>{user.name}</strong></td>
-                  <td>{user.username}</td>
-                  <td><span className="badge bg-secondary">{getRoleName(user.idRole)}</span></td>
-                  <td className="text-end">
-                    <button className="btn btn-sm btn-outline-primary me-2">Editar</button>
-                    <button className="btn btn-sm btn-outline-danger">Desactivar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <UsersTable users={users} getRoleName={getRoleName} onEdit={handleOpenEditModal} onDelete={handleDeleteUser} />
       </div>
 
-      {showModal && selectedRole && (
-        <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Permisos para el Rol: {selectedRole.name}</h5>
-                <button type="button" className="btn-close" onClick={() => setShowModal(false)} />
-              </div>
-              <div className="modal-body">
-                {message.text && <div className={`alert alert-${message.type}`}>{message.text}</div>}
-                <div className="list-group">
-                  {allPermissions.map(permission => (
-                    <label key={permission.id} className="list-group-item d-flex gap-3 align-items-center" style={{ cursor: 'pointer' }}>
-                      <input
-                        className="form-check-input flex-shrink-0"
-                        type="checkbox"
-                        checked={rolePermissions.includes(permission.id)}
-                        onChange={() => handleTogglePermission(permission.id)}
-                      />
-                      <div>
-                        <strong>{permission.name}</strong>
-                        <div className="text-muted small">{permission.description}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                <button type="button" className="btn btn-primary" onClick={handleSavePermissions} disabled={saving}>
-                  {saving ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
+      <PermissionsModal
+        show={showModal} onClose={() => setShowModal(false)} selectedRole={selectedRole}
+        allPermissions={allPermissions} rolePermissions={rolePermissions}
+        onTogglePermission={handleTogglePermission} onSave={handleSavePermissions}
+        saving={saving} message={message}
+      />
+
+      <UserModal
+        show={showUserModal} onClose={() => setShowUserModal(false)} isEditing={isEditing}
+        formData={userFormData} setFormData={setUserFormData} onSubmit={handleSaveUser}
+        saving={savingUser} message={userMessage} roles={roles}
+      />
+
+      <RoleModal
+        show={showRoleModal} onClose={() => setShowRoleModal(false)} isEditing={isEditingRole}
+        formData={roleFormData} setFormData={setRoleFormData} onSubmit={handleSaveRole}
+        saving={savingRole} message={roleMessage}
+      />
     </div>
   );
 }

@@ -2,21 +2,34 @@ import { useEffect, useState } from "react";
 import type Product from "../interfaces/Product";
 import type ProductCategory from "../interfaces/ProductCategory";
 import type CartItem from "../interfaces/CartItem";
+import type { InvoiceResponse, PaymentMethod, SaleRequest } from "../interfaces/Sale";
 import { getAllProducts } from "../services/ProductService";
 import { getActiveProductCategories } from "../services/ProductCategoryService";
+import { createSale } from "../services/SaleService";
 import { showError } from "../utils/alerts";
 import { formatCurrency } from "../utils/formatCurrency";
+import Button from "../components/atoms/Button";
 import ProductSearchBar from "../components/molecules/ProductSearchBar";
 import CategoryFilter from "../components/molecules/CategoryFilter";
 import ProductCard from "../components/molecules/ProductCard";
+import Pagination from "../components/molecules/Pagination";
 import CartRow from "../components/molecules/CartRow";
+import PaymentSummary from "../components/molecules/PaymentSummary";
+import InvoiceModal from "../components/organism/sales/InvoiceModal";
+
+const PAGE_SIZE = 6; // productos por página (llena filas completas de 2 o de 3)
 
 export default function NewSalePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
+  const [amountReceived, setAmountReceived] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [invoice, setInvoice] = useState<InvoiceResponse | null>(null); // factura recién cobrada
 
   // al abrir la pantalla se cargan los productos y las categorías
   useEffect(() => {
@@ -32,6 +45,16 @@ export default function NewSalePage() {
     loadData();
   }, []);
 
+  // vuelve a pedir los productos para que el catálogo muestre el stock actualizado
+  async function refreshProducts() {
+    try {
+      const productList = await getAllProducts();
+      setProducts(productList.filter((p) => p.productAmount > 0));
+    } catch (err: any) {
+      showError(err, "No se pudieron cargar los productos");
+    }
+  }
+
   // productos que se ven según la categoría elegida y el texto del buscador
   const text = searchText.trim().toLowerCase();
   const visibleProducts = products.filter((p) => {
@@ -40,11 +63,31 @@ export default function NewSalePage() {
     return matchesCategory && matchesText;
   });
 
+  // paginación del catálogo. solo se muestran los productos de la página actual
+  const totalPages = Math.ceil(visibleProducts.length / PAGE_SIZE);
+  const page = Math.min(currentPage, Math.max(totalPages, 1)); // por si la lista se acorta y la página ya no existe
+  const pageProducts = visibleProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // al cambiar la categoría o el texto del buscador se vuelve a la primera página
+  function handleCategoryChange(id: number | null) {
+    setSelectedCategoryId(id);
+    setCurrentPage(1);
+  }
+
+  function handleSearchChange(newText: string) {
+    setSearchText(newText);
+    setCurrentPage(1);
+  }
+
   // total de la venta: suma de precio por cantidad de cada línea
   let total = 0;
   for (const item of cart) {
     total = total + item.product.unitPrice * item.quantity;
   }
+
+
+  const cashIsEnough = amountReceived !== "" && Number(amountReceived) >= total;
+  const canPay = cart.length > 0 && (paymentMethod === "TARJETA" || cashIsEnough);
 
   // agrega el producto al detalle, o le suma una unidad si ya estaba
   function handleAdd(product: Product) {
@@ -57,7 +100,7 @@ export default function NewSalePage() {
     }
   }
 
-  // cambia la cantidad de una línea; si llega a 0 la quita del detalle
+  // cambia la cantidad de una línea. si llega a 0 la quita del detalle
   function handleQuantityChange(product: Product, quantity: number) {
     if (quantity <= 0) {
       setCart(cart.filter((item) => item.product.id !== product.id));
@@ -69,6 +112,31 @@ export default function NewSalePage() {
   // vacía el detalle de venta
   function handleClear() {
     setCart([]);
+    setAmountReceived("");
+  }
+
+  // registra la venta en el backend
+  async function handleCompleteSale() {
+    setSaving(true);
+
+    try {
+      const request: SaleRequest = {
+        paymentMethod: paymentMethod,
+        amountReceived: paymentMethod === "EFECTIVO" ? Number(amountReceived) : null,
+        items: cart.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+      };
+
+      const newInvoice = await createSale(request);
+      setInvoice(newInvoice); // se muestra la factura en una ventana
+      setCart([]);
+      setAmountReceived("");
+    } catch (err: any) {
+      showError(err, "No se pudo registrar la venta");
+    } finally {
+      setSaving(false);
+    }
+
+    refreshProducts(); // el stock cambió (o pudo haber cambiado), se actualiza el catálogo
   }
 
   // pendiente: aquí se agregará por código de barras al presionar Enter
@@ -83,23 +151,29 @@ export default function NewSalePage() {
           <h1 className="h3 mb-4">Nueva venta</h1>
 
           <div className="mb-3">
-            <ProductSearchBar value={searchText} onChange={setSearchText} onSubmit={handleSearchSubmit} />
+            <ProductSearchBar value={searchText} onChange={handleSearchChange} onSubmit={handleSearchSubmit} />
           </div>
 
           <div className="mb-4">
-            <CategoryFilter categories={categories} selectedId={selectedCategoryId} onSelect={setSelectedCategoryId} />
+            <CategoryFilter categories={categories} selectedId={selectedCategoryId} onSelect={handleCategoryChange} />
           </div>
 
           {visibleProducts.length === 0 ? (
             <p className="text-muted">No hay productos disponibles.</p>
           ) : (
-            <div className="row g-3">
-              {visibleProducts.map((product) => (
-                <div key={product.id} className="col-12 col-md-6 col-xxl-4">
-                  <ProductCard product={product} onAdd={handleAdd} />
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="row g-3">
+                {pageProducts.map((product) => (
+                  <div key={product.id} className="col-12 col-md-6 col-xxl-4">
+                    <ProductCard product={product} onAdd={handleAdd} />
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4">
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setCurrentPage} />
+              </div>
+            </>
           )}
         </div>
 
@@ -129,10 +203,27 @@ export default function NewSalePage() {
               <span>Total</span>
               <strong className="fs-4">{formatCurrency(total)}</strong>
             </div>
+
+            <div className="mt-3">
+              <PaymentSummary
+                total={total}
+                paymentMethod={paymentMethod}
+                onMethodChange={setPaymentMethod}
+                amountReceived={amountReceived}
+                onAmountChange={setAmountReceived}
+              />
+            </div>
+
+            <Button variant="success" className="w-100 d-flex justify-content-between mt-3" disabled={!canPay || saving} onClick={handleCompleteSale}>
+              <span>{saving ? "Registrando..." : "Completar venta"}</span>
+              <span>{formatCurrency(total)}</span>
+            </Button>
           </div>
         </div>
 
       </div>
+
+      {invoice !== null && <InvoiceModal invoice={invoice} onClose={() => setInvoice(null)} />}
     </div>
   );
 }

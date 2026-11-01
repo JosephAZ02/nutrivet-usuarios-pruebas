@@ -10,5 +10,13 @@ export const RoleService = {
     getAll: async (): Promise<RoleResponse[]> => {
         const response = await api.get('/role/all');
         return response.data;
+    },
+    create: async (roleData: { name: string; description: string }) => {
+        const response = await api.post('/role/add', roleData);
+        return response.data;
+    },
+    update: async (id: number, roleData: { name: string; description: string }) => {
+        const response = await api.put(`/role/update/${id}`, roleData);
+        return response.data;
     }
 };

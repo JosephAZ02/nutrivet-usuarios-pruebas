@@ -39,17 +39,32 @@ public class RoleController {
     }
 
     @PostMapping("/add")
-    public Role addRole(@RequestBody Role role) {
-        return roleService.add(role);
+    @PreAuthorize("hasAuthority('USER_CREATE')")
+    public org.springframework.http.ResponseEntity<?> createRole(
+            @RequestBody com.nutrivet.backend.dto.RoleRequest request) {
+        com.nutrivet.backend.domain.Role role = new com.nutrivet.backend.domain.Role();
+        role.setName(request.getName());
+        role.setDescription(request.getDescription());
+        roleService.add(role);
+        return org.springframework.http.ResponseEntity.ok("Rol creado correctamente");
     }
 
-    @PutMapping("/update")
-    public Role updateRole(@RequestBody Role role) {
-        return roleService.add(role);
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAuthority('USER_CREATE')")
+    public org.springframework.http.ResponseEntity<?> updateRole(@PathVariable int id,
+            @RequestBody com.nutrivet.backend.dto.RoleRequest request) {
+        com.nutrivet.backend.domain.Role role = roleService.getById(id)
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
+        role.setName(request.getName());
+        role.setDescription(request.getDescription());
+        roleService.add(role);
+        return org.springframework.http.ResponseEntity.ok("Rol actualizado correctamente");
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteRole(@PathVariable int id) {
+    @PreAuthorize("hasAuthority('USER_CREATE')")
+    public org.springframework.http.ResponseEntity<?> deleteRole(@PathVariable int id) {
         roleService.deleteById(id);
+        return org.springframework.http.ResponseEntity.ok("Rol eliminado correctamente");
     }
 }
