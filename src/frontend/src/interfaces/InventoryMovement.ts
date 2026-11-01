@@ -3,6 +3,11 @@ export default interface InventoryMovement {
   type: string;
   amount: number;
   movementDate: string;
-  idProduct: number;
+  reason: string;
+  product: {
+    id: number;
+    name: string;
+    code: string;
+  };
   idInvoice: number | null;
 }

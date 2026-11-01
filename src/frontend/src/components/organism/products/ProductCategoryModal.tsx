@@ -26,6 +26,7 @@ function ProductCategoryModal({categoryName,setCategoryName,savingCategory,onClo
                         <label className="form-label text-dark">Nombre de la categoría</label>
                         <input
                             type="text"
+                            style={{ borderColor: '#000' }}
                             className="form-control"
                             placeholder="Ingrese el nombre de la categoría"
                             value={categoryName}
