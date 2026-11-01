@@ -43,6 +43,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Código</label>
                                 <input
                                     type="text"
+                                    style={{ borderColor: '#000' }}
                                     className="form-control"
                                     placeholder="Código del producto"
                                     value={productForm.code}
@@ -56,6 +57,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Nombre</label>
                                 <input
                                     type="text"
+                                    style={{ borderColor: '#000' }}
                                     className="form-control"
                                     placeholder="Nombre del producto"
                                     value={productForm.name}
@@ -69,6 +71,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Categoría</label>
                                 <select
                                     className="form-select"
+                                    style={{ borderColor: '#000' }}
                                     value={productForm.category.id}
                                     onChange={(e) => setProductForm({
                                         ...productForm,
@@ -89,7 +92,8 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                     <label className="form-label text-dark">Existencias iniciales</label>
                                     <input
                                         type="number"
-                                        min="0"
+                                        style={{ borderColor: '#000' }}
+                                        min="0.01"
                                         className="form-control"
                                         value={productForm.productAmount}
                                         onChange={(e) => setProductForm({
@@ -103,7 +107,8 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Costo del producto (₡)</label>
                                 <input
                                     type="number"
-                                    min="0"
+                                    style={{ borderColor: '#000' }}
+                                    min="0.01"
                                     step="0.01"
                                     className="form-control"
                                     value={productForm.productCost}
@@ -117,7 +122,8 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Costo de transporte (₡)</label>
                                 <input
                                     type="number"
-                                    min="0"
+                                    min="0.01"
+                                    style={{ borderColor: '#000' }}
                                     step="0.01"
                                     className="form-control"
                                     value={productForm.transportCost}
@@ -131,7 +137,8 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Precio de venta (₡)</label>
                                 <input
                                     type="number"
-                                    min="0"
+                                    min="0.01"
+                                    style={{ borderColor: '#000' }}
                                     step="0.01"
                                     className="form-control"
                                     value={productForm.unitPrice}
@@ -145,7 +152,8 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <div className="form-check mt-2">
                                     <input
                                         type="checkbox"
-                                        className="form-check-input"
+                                        style={{ borderColor: '#000' }}
+                                        className="form-check-input "
                                         id="bulkSale"
                                         checked={productForm.bulkSale}
                                         onChange={(e) => setProductForm({
@@ -162,6 +170,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                 <label className="form-label text-dark">Fotografía (opcional)</label>
                                 <input
                                     type="file"
+                                    style={{ borderColor: '#000' }}
                                     className="form-control"
                                     accept="image/png, image/jpeg"
                                     onChange={(e) => setProductImage(e.target.files?.[0] ?? null)}

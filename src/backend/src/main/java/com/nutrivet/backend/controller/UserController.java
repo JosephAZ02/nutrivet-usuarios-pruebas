@@ -54,11 +54,14 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     public ResponseEntity<?> updateUser(@PathVariable int id, @RequestBody UpdateUserRequest request) {
         try {
+
             User user = userService.getById(id)
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            userService.checkIfLastAdmin(id, request.getRoleId());
 
             user.setName(request.getName());
             user.setUsername(request.getUsername());
@@ -68,29 +71,25 @@ public class UserController {
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
             }
 
-            userService.add(user);
+            userService.updateUser(user);
+
             return ResponseEntity.ok("Usuario actualizado correctamente");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al actualizar: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('USER_DELETE')")
     public ResponseEntity<?> deleteUser(@PathVariable int id) {
-
         try {
-            if (id == 1) {
-                return ResponseEntity.badRequest().body("Error: no puede eliminar el usuario principal");
 
-            }
+            userService.checkIfLastAdminOnDelete(id);
+
             userService.deleteById(id);
-
-            return ResponseEntity.ok("Usuario eliminado exitosamente");
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al eliminar usuario: " + e.getMessage());
+            return ResponseEntity.ok("Usuario eliminado correctamente");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
     }
 }

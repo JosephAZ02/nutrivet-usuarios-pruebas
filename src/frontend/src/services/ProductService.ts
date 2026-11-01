@@ -86,3 +86,17 @@ export async function getLowStockProducts(): Promise<Product[]> {
   const response = await api.get<Product[]>("/product/low-stock");
   return response.data;
 }
+
+export async function getProductsByStockStatus(status: string): Promise<Product[]> {
+  if (status === "Crítico") {
+    return await getCriticalStockProducts();
+  }
+
+  if (status === "Bajo") {
+    return await getLowStockProducts();
+  }
+
+  const products = await getAllProducts();
+
+  return products.filter(product => product.productAmount >= 20);
+}
