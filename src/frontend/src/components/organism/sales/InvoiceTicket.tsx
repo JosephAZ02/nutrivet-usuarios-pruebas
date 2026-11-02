@@ -1,6 +1,7 @@
 import type { InvoiceResponse } from "../../../interfaces/Sale";
 import { BUSINESS } from "../../../utils/invoiceBusinessInfo";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { paymentLabel } from "../../../utils/paymentLabel";
 
 interface InvoiceTicketProps {
     invoice: InvoiceResponse; //factura que se imprime
@@ -9,7 +10,7 @@ interface InvoiceTicketProps {
 // versión compacta de la factura para impresoras de tickets de 80 mm (solo se ve al imprimir)
 function InvoiceTicket({ invoice }: InvoiceTicketProps) {
     const date = new Date(invoice.date).toLocaleString("es-CR");
-    const method = invoice.paymentMethod === "EFECTIVO" ? "Efectivo" : "Tarjeta";
+    const method = paymentLabel(invoice.paymentMethod);
 
     return (
         <div id="ticket-print">

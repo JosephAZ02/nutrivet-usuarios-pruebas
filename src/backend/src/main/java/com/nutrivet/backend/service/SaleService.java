@@ -1,6 +1,5 @@
 package com.nutrivet.backend.service;
 
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +19,16 @@ public class SaleService {
 
     private static final String CASH = "EFECTIVO";
     private static final String CARD = "TARJETA";
+    private static final String SINPE = "SINPE";
 
     private final InvoiceService invoiceService;
     private final InvoiceDetailService invoiceDetailService;
     private final InventoryMovementService inventoryMovementService;
     private final ProductService productService;
+    private static final int MAX_LINES = 30; // máximo de líneas por factura
 
-    public SaleService(InvoiceService invoiceService, InvoiceDetailService invoiceDetailService,InventoryMovementService inventoryMovementService, ProductService productService) {
+    public SaleService(InvoiceService invoiceService, InvoiceDetailService invoiceDetailService,
+            InventoryMovementService inventoryMovementService, ProductService productService) {
         this.invoiceService = invoiceService;
         this.invoiceDetailService = invoiceDetailService;
         this.inventoryMovementService = inventoryMovementService;
@@ -38,7 +40,8 @@ public class SaleService {
     public InvoiceResponse createSale(SaleRequest request) {
         validateSale(request);
 
-        // La factura se guarda primero para tener su id y los totales se completan al final
+        // La factura se guarda primero para tener su id y los totales se completan al
+        // final
         Invoice invoice = new Invoice();
         invoice.setDate(LocalDateTime.now());
         invoice.setPaymentMethod(request.paymentMethod());
@@ -58,7 +61,8 @@ public class SaleService {
         return getInvoice(invoice.getId());
     }
 
-    // Devuelve una factura guardada con sus líneas para mostrarla, imprimirla o descargarla
+    // Devuelve una factura guardada con sus líneas para mostrarla, imprimirla o
+    // descargarla
     public InvoiceResponse getInvoice(int id) {
         Invoice invoice = invoiceService.getById(id)
                 .orElseThrow(() -> new RuntimeException("La factura no existe"));
@@ -88,10 +92,22 @@ public class SaleService {
         if (request == null || request.items() == null || request.items().isEmpty()) {
             throw new RuntimeException("La factura debe tener al menos un producto");
         }
+
+        if (request.items().size() > MAX_LINES) {
+            throw new RuntimeException("La factura no puede tener más de " + MAX_LINES + " productos");
+        }
+
+        // se revisan todas las líneas antes de guardar nada
+        for (SaleItemRequest item : request.items()) {
+            if (item == null) {
+                throw new RuntimeException("La factura contiene un producto inválido");
+            }
+        }
+
         String method = request.paymentMethod();
 
-        if (!CASH.equals(method) && !CARD.equals(method)) {
-            throw new RuntimeException("Método de pago inválido: use EFECTIVO o TARJETA");
+        if (!CASH.equals(method) && !CARD.equals(method) && !SINPE.equals(method)) {
+            throw new RuntimeException("Método de pago inválido: use EFECTIVO, TARJETA o SINPE");
         }
     }
 
@@ -134,7 +150,8 @@ public class SaleService {
         invoiceDetailService.add(detail);
     }
 
-    // Registra la salida en donde InventoryMovementService.add es quien rebaja el stock
+    // Registra la salida en donde InventoryMovementService.add es quien rebaja el
+    // stock
     private void saveMovement(Invoice invoice, Product product, int quantity) {
         InventoryMovement movement = new InventoryMovement();
         movement.setType("SALIDA");

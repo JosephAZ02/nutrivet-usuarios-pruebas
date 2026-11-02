@@ -4,7 +4,7 @@ export interface SaleItemRequest {
   quantity: number;
 }
 
-export type PaymentMethod = "EFECTIVO" | "TARJETA";
+export type PaymentMethod = "EFECTIVO" | "TARJETA" | "SINPE";
 
 export interface SaleRequest {
   paymentMethod: PaymentMethod;

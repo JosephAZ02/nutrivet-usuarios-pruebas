@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,8 @@ import com.nutrivet.backend.dto.SaleRequest;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class SaleServiceTest {
 
-    // Los servicios de los que depende SaleService se reemplazan por versiones falsas
+    // Los servicios de los que depende SaleService se reemplazan por versiones
+    // falsas
     @Mock
     private InvoiceService invoiceService;
 
@@ -132,7 +134,7 @@ class SaleServiceTest {
         InvoiceResponse invoice = saleService.createSale(
                 cashSale(4000.0, new SaleItemRequest(1, 2), new SaleItemRequest(2, 3)));
 
-        // 1500.50 x 2 = 3001.00  y  250.25 x 3 = 750.75
+        // 1500.50 x 2 = 3001.00 y 250.25 x 3 = 750.75
         assertEquals(3751.75, invoice.total(), 0.001);
         assertEquals(248.25, invoice.change(), 0.001);
         assertEquals(2, invoice.items().size());
@@ -173,11 +175,34 @@ class SaleServiceTest {
     }
 
     @Test
+    void sinpe_noNecesitaMontoYElVueltoEsCero() {
+        addProduct(1, "Producto A", 1000, 10);
+        SaleRequest request = new SaleRequest("SINPE", null, List.of(new SaleItemRequest(1, 2)));
+
+        InvoiceResponse invoice = saleService.createSale(request);
+
+        assertEquals("SINPE", invoice.paymentMethod());
+        assertEquals(2000.0, invoice.total(), 0.001);
+        assertEquals(0.0, invoice.change(), 0.001);
+        assertEquals(2000.0, invoice.amountReceived(), 0.001);
+    }
+
+    @Test
+    void sinpe_rebajaElInventarioComoCualquierVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        SaleRequest request = new SaleRequest("SINPE", null, List.of(new SaleItemRequest(1, 3)));
+
+        saleService.createSale(request);
+
+        verify(inventoryMovementService, times(1)).add(any(InventoryMovement.class));
+    }
+
+    @Test
     void metodoDePagoInvalido_rechazaLaVenta() {
         addProduct(1, "Producto A", 1000, 10);
         SaleRequest request = new SaleRequest("CHEQUE", 5000.0, List.of(new SaleItemRequest(1, 1)));
 
-        assertSaleFails(request, "Método de pago inválido: use EFECTIVO o TARJETA");
+        assertSaleFails(request, "Método de pago inválido: use EFECTIVO, TARJETA o SINPE");
     }
 
     // ---------- inventario ----------
@@ -314,14 +339,83 @@ class SaleServiceTest {
     void cantidadCero_rechazaLaVenta() {
         addProduct(1, "Producto A", 1000, 10);
 
-        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, 0)), "La cantidad de cada producto debe ser mayor a cero");
+        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, 0)),
+                "La cantidad de cada producto debe ser mayor a cero");
     }
 
     @Test
     void cantidadNegativa_rechazaLaVenta() {
         addProduct(1, "Producto A", 1000, 10);
 
-        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, -2)), "La cantidad de cada producto debe ser mayor a cero");
+        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, -2)),
+                "La cantidad de cada producto debe ser mayor a cero");
+    }
+
+    @Test
+    void productoNuloEnLaLista_rechazaLaVentaYNoGuardaNada() {
+        addProduct(1, "Producto A", 1000, 10);
+        // List.of no acepta null, por eso se usa Arrays.asList
+        List<SaleItemRequest> items = Arrays.asList(new SaleItemRequest(1, 1), null);
+
+        assertSaleFails(new SaleRequest("EFECTIVO", 9999.0, items), "La factura contiene un producto inválido");
+
+        verify(invoiceService, never()).add(any(Invoice.class));
+        verify(inventoryMovementService, never()).add(any(InventoryMovement.class));
+    }
+
+    @Test
+    void masDeCienProductos_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 1000);
+        List<SaleItemRequest> items = new ArrayList<>();
+        for (int i = 0; i < 101; i++) {
+            items.add(new SaleItemRequest(1, 1));
+        }
+
+        assertSaleFails(new SaleRequest("EFECTIVO", 999999.0, items), "La factura no puede tener más de 100 productos");
+
+        verify(invoiceService, never()).add(any(Invoice.class));
+    }
+
+    @Test
+    void exactamenteCienProductos_permiteLaVenta() {
+        addProduct(1, "Producto A", 10, 1000);
+        List<SaleItemRequest> items = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            items.add(new SaleItemRequest(1, 1));
+        }
+
+        InvoiceResponse invoice = saleService.createSale(new SaleRequest("TARJETA", null, items));
+
+        assertEquals(1000.0, invoice.total(), 0.001);
+        assertEquals(100, invoice.items().size());
+    }
+
+    @Test
+    void mismoProductoEnDosLineas_sumaLasCantidades() {
+        addProduct(1, "Producto A", 1000, 10);
+
+        InvoiceResponse invoice = saleService
+                .createSale(cardSale(new SaleItemRequest(1, 2), new SaleItemRequest(1, 3)));
+
+        assertEquals(5000.0, invoice.total(), 0.001);
+        assertEquals(2, invoice.items().size());
+        verify(inventoryMovementService, times(2)).add(any(InventoryMovement.class));
+    }
+
+    @Test
+    void mismoProductoEnDosLineas_sumadasSuperanLasExistencias_rechazaLaVenta() {
+        Product product = addProduct(1, "Producto A", 1000, 4);
+
+        // el servicio real de inventario rebaja el stock; aquí se imita para que la 2.ª
+        // línea lo vea rebajado
+        when(inventoryMovementService.add(any(InventoryMovement.class))).thenAnswer(call -> {
+            InventoryMovement movement = call.getArgument(0);
+            product.setProductAmount(product.getProductAmount() - (int) movement.getAmount());
+            return movement;
+        });
+
+        assertSaleFails(cardSale(new SaleItemRequest(1, 2), new SaleItemRequest(1, 3)),
+                "Existencias insuficientes de \"Producto A\": disponibles 2, solicitadas 3");
     }
 
     // ---------- consultar una factura guardada ----------

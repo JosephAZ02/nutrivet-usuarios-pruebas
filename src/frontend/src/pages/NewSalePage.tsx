@@ -6,7 +6,7 @@ import type { InvoiceResponse, PaymentMethod, SaleRequest } from "../interfaces/
 import { getAllProducts, searchProductByCode } from "../services/ProductService";
 import { getActiveProductCategories } from "../services/ProductCategoryService";
 import { createSale } from "../services/SaleService";
-import { showError, showWarning } from "../utils/alerts";
+import { showError, showWarning, showConfirm } from "../utils/alerts";
 import { formatCurrency } from "../utils/formatCurrency";
 import Button from "../components/atoms/Button";
 import ProductSearchBar from "../components/molecules/ProductSearchBar";
@@ -88,9 +88,9 @@ export default function NewSalePage() {
     total = total + item.product.unitPrice * item.quantity;
   }
 
-  
+
   const cashIsEnough = amountReceived !== "" && Number(amountReceived) >= total;
-  const canPay = cart.length > 0 && (paymentMethod === "TARJETA" || cashIsEnough);
+  const canPay = cart.length > 0 && (paymentMethod !== "EFECTIVO" || cashIsEnough);
 
   // mensajes que explican por qué el botón de cobrar está desactivado
   let payHint = "";
@@ -132,6 +132,22 @@ export default function NewSalePage() {
 
   // registra la venta en el backend
   async function handleCompleteSale() {
+    // resumen que se muestra antes de cobrar
+        let summary = `Total: <b>${formatCurrency(total)}</b><br>`;
+    if (paymentMethod === "EFECTIVO") {
+      summary += `Recibido: <b>${formatCurrency(Number(amountReceived))}</b><br>`;
+      summary += `Vuelto: <b>${formatCurrency(Number(amountReceived) - total)}</b>`;
+    } else if (paymentMethod === "SINPE") {
+      summary += "Pago con SINPE";
+    } else {
+      summary += "Pago con tarjeta";
+    }
+
+    const confirmed = await showConfirm("¿Completar la venta?", summary, "Sí, cobrar");
+    if (!confirmed) {
+      return;
+    }
+
     setSaving(true);
 
     try {
