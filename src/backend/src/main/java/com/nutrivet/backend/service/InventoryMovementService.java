@@ -9,21 +9,35 @@ import com.nutrivet.backend.domain.InventoryMovement;
 import com.nutrivet.backend.domain.Product;
 import com.nutrivet.backend.repository.InventoryMovementRepository;
 import com.nutrivet.backend.repository.ProductRepository;
+import com.nutrivet.backend.repository.InvoiceRepository;
+import com.nutrivet.backend.dto.InventoryMovementResponse;
 
 @Service
 public class InventoryMovementService {
 
     private final InventoryMovementRepository inventoryMovementRepository;
     private final ProductRepository productRepository;
+    private final InvoiceRepository invoiceRepository;
 
     public InventoryMovementService(InventoryMovementRepository inventoryMovementRepository,
-            ProductRepository productRepository) {
+            ProductRepository productRepository, InvoiceRepository invoiceRepository) {
         this.inventoryMovementRepository = inventoryMovementRepository;
         this.productRepository = productRepository;
+        this.invoiceRepository = invoiceRepository;
     }
 
-    public List<InventoryMovement> getAll() {
-        return inventoryMovementRepository.findAll();
+    public List<InventoryMovementResponse> getAll() {
+        return inventoryMovementRepository.findAll().stream().map(movement -> {
+            String invoiceNumber = null;
+
+            if (movement.getIdInvoice() != null) {
+                invoiceNumber = invoiceRepository.findById(movement.getIdInvoice()).map(invoice -> invoice.getNumber()).orElse(null);
+            }
+            System.out.println("ID factura: " + movement.getIdInvoice()
+        + " | Número factura: " + invoiceNumber);
+
+            return InventoryMovementResponse.from(movement,invoiceNumber);
+        }).toList();
     }
 
     public Optional<InventoryMovement> getById(Integer id) {
@@ -60,7 +74,8 @@ public class InventoryMovementService {
             throw new RuntimeException("Debe indicar un producto válido");
         }
 
-        Product product = productRepository.findById(inventoryMovement.getProduct().getId()).orElseThrow(() -> new RuntimeException("El producto no existe"));
+        Product product = productRepository.findById(inventoryMovement.getProduct().getId())
+                .orElseThrow(() -> new RuntimeException("El producto no existe"));
 
         if (!product.isActive()) {
             throw new RuntimeException("No se pueden registrar movimientos de un producto desactivado");
@@ -74,7 +89,10 @@ public class InventoryMovementService {
         // actualizar existencias
         if (inventoryMovement.getType().equals("ENTRADA")) {
             try {
-                product.setProductAmount(Math.addExact(product.getProductAmount(), amount)); // validacion para que lo que ingrese no se desborde el limite de un entero
+                product.setProductAmount(Math.addExact(product.getProductAmount(), amount)); // validacion para que lo
+                                                                                             // que ingrese no se
+                                                                                             // desborde el limite de un
+                                                                                             // entero
             } catch (ArithmeticException e) {
                 throw new RuntimeException("La cantidad supera el límite permitido para el inventario");
             }

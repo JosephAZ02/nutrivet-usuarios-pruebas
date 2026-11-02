@@ -1,6 +1,6 @@
 import api from "./Api";
 import type Product from "../interfaces/Product";
-import type {ProductCreatePayload,ProductUpdatePayload} from "../interfaces/ProductPayload";
+import type { ProductCreatePayload, ProductUpdatePayload } from "../interfaces/ProductPayload";
 
 // obtener los productos activos
 export async function getAllProducts(): Promise<Product[]> {
@@ -15,11 +15,12 @@ export async function getProductById(id: number): Promise<Product> {
 }
 
 // registrar producto
-export async function addProduct(product: ProductCreatePayload,image?: File | null): Promise<Product> {
+export async function addProduct(product: ProductCreatePayload, image?: File | null): Promise<Product> {
   const formData = new FormData();
 
-  formData.append("product",new Blob([JSON.stringify(product)], {
-      type: "application/json"})
+  formData.append("product", new Blob([JSON.stringify(product)], {
+    type: "application/json"
+  })
   );
 
   if (image) {
@@ -34,8 +35,9 @@ export async function addProduct(product: ProductCreatePayload,image?: File | nu
 export async function updateProduct(id: number, product: ProductUpdatePayload, image?: File | null, removeImage: boolean = false): Promise<Product> {
   const formData = new FormData();
 
-  formData.append("product",new Blob([JSON.stringify(product)], {
-      type: "application/json"})
+  formData.append("product", new Blob([JSON.stringify(product)], {
+    type: "application/json"
+  })
   );
 
   if (image) {
@@ -44,7 +46,7 @@ export async function updateProduct(id: number, product: ProductUpdatePayload, i
 
   formData.append("removeImage", String(removeImage));
 
-  const response = await api.put<Product>(`/product/update/${id}`,formData);
+  const response = await api.put<Product>(`/product/update/${id}`, formData);
 
   return response.data;
 }
@@ -57,14 +59,14 @@ export async function deleteProduct(id: number): Promise<string> {
 
 // buscar por nombre
 export async function searchProductsByName(name: string): Promise<Product[]> {
-  const response = await api.get<Product[]>("/product/search/name", {params: { name }});
+  const response = await api.get<Product[]>("/product/search/name", { params: { name } });
 
   return response.data;
 }
 
 // buscar por código
 export async function searchProductByCode(code: string): Promise<Product> {
-  const response = await api.get<Product>("/product/search/code", {params: { code }});
+  const response = await api.get<Product>("/product/search/code", { params: { code } });
 
   return response.data;
 }
@@ -99,4 +101,14 @@ export async function getProductsByStockStatus(status: string): Promise<Product[
   const products = await getAllProducts();
 
   return products.filter(product => product.productAmount >= 20);
+}
+
+export async function getInactiveProducts(): Promise<Product[]> {
+  const response = await api.get<Product[]>("/product/inactive");
+  return response.data;
+}
+
+export async function reactivateProduct(id: number): Promise<Product> {
+  const response = await api.put<Product>(`/product/reactivate/${id}`);
+  return response.data;
 }

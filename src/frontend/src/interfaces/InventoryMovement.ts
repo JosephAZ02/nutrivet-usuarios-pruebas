@@ -10,4 +10,5 @@ export default interface InventoryMovement {
     code: string;
   };
   idInvoice: number | null;
+  invoiceNumber: string | null;
 }

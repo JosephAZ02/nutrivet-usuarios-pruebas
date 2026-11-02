@@ -6,7 +6,8 @@ import { getAllInventoryMovements, addInventoryMovement, } from "../services/Inv
 import InventoryStats from "../components/organism/inventory/InventoryStats";
 import InventoryTable from "../components/organism/inventory/InventoryTable";
 import InventoryMovementModal from "../components/organism/inventory/InventoryModal";
-import Swal from "sweetalert2";
+
+import { showSuccess } from "../utils/alerts";
 
 export default function InventoryPage() {
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
@@ -88,15 +89,8 @@ export default function InventoryPage() {
     try {
       setSaving(true);
       setError("");
-
       await addInventoryMovement(movement);
-      Swal.fire({
-        icon: "success",
-        title: "Entrada registrada",
-        text: "La entrada de inventario se ha registrado correctamente.",
-        confirmButtonColor: "#198754",
-      });
-
+      showSuccess("Entrada registrada", "La entrada de inventario se ha registrado correctamente.");
       setCurrentPage(1);
 
       await loadData();
@@ -110,9 +104,7 @@ export default function InventoryPage() {
       const errorMessage = err.response?.data;
 
       setError(
-        typeof errorMessage === "string"
-          ? errorMessage
-          : "No se pudo registrar la entrada de inventario."
+        typeof errorMessage === "string" ? errorMessage : "No se pudo registrar la entrada de inventario."
       );
 
       return false;
@@ -205,36 +197,7 @@ export default function InventoryPage() {
             </div>
           ) : (
             <>
-              <InventoryTable movements={currentMovements} />
-
-              {/* Paginación */}
-              {filteredMovements.length > 0 && (
-                <div className="d-flex justify-content-center align-items-center flex-wrap gap-3 mt-3">
-                  <div className="d-flex justify-content-between align-items-center mt-4">
-                    <div className="btn-group">
-                      <button
-                        className="btn btn-outline-secondary btn-sm"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage((page) => page - 1)}
-                      >
-                        Anterior
-                      </button>
-
-                      <button className="btn btn-outline-secondary btn-sm" disabled>
-                        {currentPage} / {totalPages}
-                      </button>
-
-                      <button
-                        className="btn btn-outline-secondary btn-sm"
-                        disabled={currentPage >= totalPages}
-                        onClick={() => setCurrentPage((page) => page + 1)}
-                      >
-                        Siguiente
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <InventoryTable movements={currentMovements}currentPage={currentPage}totalPages={totalPages}onPageChange={setCurrentPage}/>
             </>
           )}
         </div>

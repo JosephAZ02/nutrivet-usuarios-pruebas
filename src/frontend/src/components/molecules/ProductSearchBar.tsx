@@ -18,7 +18,7 @@ function ProductSearchBar({ value, onChange, onSubmit }: ProductSearchBarProps) 
             <span className="input-group-text bg-white">
                 <i className="bi bi-search" aria-hidden="true"></i>
             </span>
-            <Input placeholder="Buscar por nombre o escanear código de barras..." value={value} onChange={(e) => onChange(e.target.value)} />
+            <Input autoFocus placeholder="Buscar por nombre o escanear código de barras..." value={value} onChange={(e) => onChange(e.target.value)} />
         </form>
     );
 }

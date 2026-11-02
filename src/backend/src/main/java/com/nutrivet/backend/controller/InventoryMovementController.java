@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.nutrivet.backend.domain.InventoryMovement;
 import com.nutrivet.backend.service.InventoryMovementService;
+import com.nutrivet.backend.dto.InventoryMovementResponse;
 
 @RestController
 @RequestMapping("/api/inventoryMovement")
@@ -30,13 +31,14 @@ public class InventoryMovementController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<InventoryMovement>> getAllInventoryMovements() {
+    public ResponseEntity<List<InventoryMovementResponse>> getAllInventoryMovements() {
         return ResponseEntity.ok(inventoryMovementService.getAll());
     }
 
     @GetMapping("/get/{id}")
     public ResponseEntity<?> getInventoryMovementById(@PathVariable Integer id) {
-        return inventoryMovementService.getById(id).<ResponseEntity<?>>map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró el movimiento de inventario"));
+        return inventoryMovementService.getById(id).<ResponseEntity<?>>map(ResponseEntity::ok).orElseGet(
+                () -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró el movimiento de inventario"));
     }
 
     @PostMapping("/add")
@@ -48,15 +50,4 @@ public class InventoryMovementController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    /*
-     * @DeleteMapping("/delete/{id}")
-     * public ResponseEntity<?> deleteInventoryMovement(@PathVariable Integer id) {
-     * try {
-     * inventoryMovementService.deleteById(id);
-     * return ResponseEntity.noContent().build();
-     * } catch (RuntimeException e) {
-     * return ResponseEntity.badRequest().body("No se pudo eliminar el movimiento");
-     * }
-     * }
-     */
 }

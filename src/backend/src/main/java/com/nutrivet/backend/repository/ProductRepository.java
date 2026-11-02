@@ -10,9 +10,14 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Integer> {
     boolean existsByCodeIgnoreCase(String code);
 
+    List<Product> findByActiveFalse();
+
     boolean existsByCodeIgnoreCaseAndIdNot(String code, int id);
+
     List<Product> findByActiveTrue();
+
     List<Product> findByNameContainingIgnoreCaseAndActiveTrue(String name);
+
     Optional<Product> findByCodeIgnoreCaseAndActiveTrue(String code);
 
     // Buscar por id bloqueando la fila hasta que termine la venta

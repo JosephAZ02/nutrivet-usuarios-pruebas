@@ -4,18 +4,22 @@ import ProductsTable from "../components/organism/products/ProductsTable";
 import type Product from "../interfaces/Product";
 import type ProductCategory from "../interfaces/ProductCategory";
 import { getActiveProductCategories, addProductCategory } from "../services/ProductCategoryService";
-import { getAllProducts, addProduct, updateProduct, deleteProduct } from "../services/ProductService";
+import { getAllProducts, addProduct, updateProduct, deleteProduct, getInactiveProducts, reactivateProduct } from "../services/ProductService";
 import type { ProductCreatePayload, ProductForm, ProductUpdatePayload } from "../interfaces/ProductPayload";
 import ProductModal from "../components/organism/products/ProductModal";
 import ProductCategoryModal from "../components/organism/products/ProductCategoryModal";
 import { getCriticalStockProducts } from "../services/ProductService";
 import { getAllInventoryMovements } from "../services/InventoryMovementService";
-//import type InventoryMovement from "../interfaces/InventoryMovement";
+import ProductsStats from "../components/organism/products/ProductsStats";
+import { showError, showSuccess } from "../utils/alerts";
+
 
 
 
 function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [inactiveProducts, setInactiveProducts] = useState<Product[]>([]);
+  const [showInactiveProducts, setShowInactiveProducts] = useState(false);
   const [criticalStockCount, setCriticalStockCount] = useState(0);
   const [movementsTodayCount, setMovementsTodayCount] = useState(0);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -42,8 +46,10 @@ function ProductsPage() {
 
 
   //mostrar los productos recien agregados primero y filtrar por busqueda y categoria
-  const filteredProducts = [...products].sort((a, b) => b.id - a.id).filter(product => {
+  const productsToShow = showInactiveProducts ? inactiveProducts : products;
+  const filteredProducts = [...productsToShow].sort((a, b) => b.id - a.id).filter(product => {
     const search = searchTerm.toLowerCase().trim();
+
     const matchesSearch = product.name.toLowerCase().includes(search) || product.code.toLowerCase().includes(search);
 
     const matchesCategory = selectedCategory === "all" || product.category.id === Number(selectedCategory);
@@ -87,10 +93,21 @@ function ProductsPage() {
       console.error("Error al cargar los movimientos:", error);
     }
   }
+
+
+  async function loadInactiveProducts() {
+    try {
+      const data = await getInactiveProducts();
+      setInactiveProducts(data);
+    } catch (error) {
+      console.error("Error al cargar productos desactivados:", error);
+      Swal.fire("Error", "No se pudieron cargar los productos desactivados.", "error");
+    }
+  }
+
   useEffect(() => { loadInventoryStats(); }, []);
 
-  useEffect(() => {
-    async function loadData() {
+  useEffect(() => {async function loadData() {
       try {
         setLoading(true);
         setError("");
@@ -111,31 +128,31 @@ function ProductsPage() {
     loadData();
   }, []);
 
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedCategory, selectedStockStatus]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, selectedCategory, selectedStockStatus, showInactiveProducts]);
 
   //handlers para agregar, editar y eliminar productos
   async function handleAddProduct() {
     if (!productForm.code.trim() || !productForm.name.trim() || productForm.category.id === 0) {
-      Swal.fire("Error", "Completa el código, nombre y categoría del producto.", "error");
+      showError(error, "Completa el código, nombre y categoría del producto.");
       return;
     }
     if (productForm.unitPrice === "" || productForm.productAmount === "" || productForm.productCost === "" || productForm.transportCost === "") {
-      Swal.fire("Error", "Completa todos los campos numéricos.", "error");
+      showError(error, "Completa todos los campos numéricos.");
       return;
     }
 
     if (Number(productForm.unitPrice) <= 0 || Number(productForm.productCost) <= 0 || Number(productForm.transportCost) <= 0 || Number(productForm.productAmount) <= 0) {
-      Swal.fire("Error", "El precio de venta, el costo del producto, el transporte y las existencias deben ser mayores que cero.", "error");
+      showError(error, "El precio de venta, el costo del producto, el transporte y las existencias deben ser mayores que cero.");
       return;
     }
 
     if (productImage && !["image/jpeg", "image/png"].includes(productImage.type)) {
-      Swal.fire("Error", "La fotografía debe estar en formato JPG o PNG.", "error");
+      showError(error, "La fotografía debe estar en formato JPG o PNG.");
       return;
     }
 
     if (productImage && productImage.size > 5 * 1024 * 1024) {
-      Swal.fire("Error", "La fotografía no puede superar los 5 MB.", "error");
+      showError(error, "La fotografía no puede superar los 5 MB.");
       return;
     }
     try {
@@ -146,10 +163,7 @@ function ProductsPage() {
       };
 
       await addProduct(productPayload, productImage);
-      Swal.fire({
-        text: 'Producto agregado exitosamente.',
-        icon: 'success',
-      });
+      showSuccess("Producto registrado","El producto se registró correctamente.");
 
       // actualizar lista de productos
       const updatedProducts = await getAllProducts();
@@ -163,7 +177,7 @@ function ProductsPage() {
       setShowProductModal(false);
     } catch (error) {
       console.error("Error al registrar el producto:", error);
-      Swal.fire("Error", "No se pudo registrar el producto. Verifica los datos e inténtalo nuevamente.", "error");
+      showError(error, "No se pudo registrar el producto. Verifica los datos e inténtalo nuevamente.");
     } finally {
       setSavingProduct(false);
     }
@@ -192,27 +206,27 @@ function ProductsPage() {
     if (!editingProduct) return;
 
     if (!productForm.code.trim() || !productForm.name.trim() || productForm.category.id === 0) {
-      Swal.fire("Error", "Completa el código, nombre y categoría del producto.", "error");
+      showError(error, "Completa el código, nombre y categoría del producto.");
       return;
     }
     if (productForm.unitPrice === "" || productForm.productAmount === "" || productForm.productCost === "" || productForm.transportCost === "") {
-      Swal.fire("Error", "Completa todos los campos numéricos.", "error");
+      showError(error, "Completa todos los campos numéricos.");
       return;
     }
 
     if (Number(productForm.unitPrice) <= 0 || Number(productForm.productCost) <= 0 || Number(productForm.transportCost) <= 0) {
-      Swal.fire("Error", "El precio de venta, el costo del producto y el transporte deben ser mayores que cero.", "error");
+      showError(error, "El precio de venta, el costo del producto y el transporte deben ser mayores que cero.");
       return;
     }
 
 
     if (productImage && !["image/jpeg", "image/png"].includes(productImage.type)) {
-      Swal.fire("Error", "La fotografía debe estar en formato JPG o PNG.", "error");
+      showError(error, "La fotografía debe estar en formato JPG o PNG.");
       return;
     }
 
     if (productImage && productImage.size > 5 * 1024 * 1024) {
-      Swal.fire("Error", "La fotografía no puede superar los 5 MB.", "error");
+      showError(error, "La fotografía no puede superar los 5 MB.");
       return;
     }
 
@@ -229,18 +243,14 @@ function ProductsPage() {
       const updatedProducts = await getAllProducts();
       setProducts(updatedProducts);
       await loadInventoryStats();
-      Swal.fire({
-        text: 'Producto actualizado exitosamente.',
-        icon: 'success',
-      });
-
+      showSuccess("Producto actualizado", "El producto se actualizó correctamente.");
       setEditingProduct(null);
       setProductImage(null);
       setShowProductModal(false);
 
     } catch (error) {
       console.error("Error al actualizar el producto:", error);
-      Swal.fire("Error", "No se pudo actualizar el producto. Verifica los datos e inténtalo nuevamente.", "error");
+      showError(error, "No se pudo actualizar el producto. Verifica los datos e inténtalo nuevamente.");
     } finally {
       setSavingProduct(false);
     }
@@ -263,13 +273,10 @@ function ProductsPage() {
       const updatedProducts = await getAllProducts();
       setProducts(updatedProducts);
       await loadInventoryStats();
-      Swal.fire({
-        text: 'Producto desactivado exitosamente.',
-        icon: 'success',
-      });
+      showSuccess("Producto desactivado", "El producto se desactivó correctamente.");
     } catch (error) {
       console.error("Error al desactivar el producto:", error);
-      Swal.fire("Error", "No se pudo desactivar el producto.", "error");
+      showError(error, "No se pudo desactivar el producto.");
     }
   }
 
@@ -279,12 +286,12 @@ function ProductsPage() {
     const trimmedName = categoryName.trim();
 
     if (!trimmedName) {
-      Swal.fire("Error", "Debes ingresar el nombre de la categoría.", "error");
+      showError(error, "Debes ingresar el nombre de la categoría.");
       return;
     }
 
     if (!/^[\p{L}\s'-]+$/u.test(trimmedName)) {
-      Swal.fire("Error", "El nombre de la categoría solo puede contener letras y espacios.", "error");
+      showError(error, "El nombre de la categoría solo puede contener letras y espacios.");
       return;
     }
 
@@ -296,10 +303,7 @@ function ProductsPage() {
         active: true
 
       });
-      Swal.fire({
-        text: 'Categoría creada exitosamente.',
-        icon: 'success',
-      });
+      showSuccess("Categoría creada", "La categoría se creó correctamente.");
 
       // actualizar las categorías disponibles
       const updatedCategories = await getActiveProductCategories();
@@ -310,9 +314,39 @@ function ProductsPage() {
 
     } catch (error) {
       console.error("Error al registrar la categoría:", error);
-      Swal.fire("Error", "No se pudo registrar la categoría. Verifica que no exista previamente.", "error");
+      showError(error, "No se pudo registrar la categoría. Verifica que no exista previamente.");
     } finally {
       setSavingCategory(false);
+    }
+  }
+
+  async function handleReactivateProduct(product: Product) {
+    const confirmed = await Swal.fire({
+      title: "¿Reactivar producto?",
+      text: `¿Deseas volver a activar "${product.name}"?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, reactivar",
+      cancelButtonText: "Cancelar"
+    }).then(result => result.isConfirmed);
+
+    if (!confirmed) return;
+
+    try {
+      await reactivateProduct(product.id);
+
+      const updatedProducts = await getAllProducts();
+      const updatedInactiveProducts = await getInactiveProducts();
+
+      setProducts(updatedProducts);
+      setInactiveProducts(updatedInactiveProducts);
+
+      await loadInventoryStats();
+
+      showSuccess("Producto reactivado", "El producto fue reactivado correctamente.");
+    } catch (error) {
+      console.error("Error al reactivar el producto:", error);
+      showError(error, "No se pudo reactivar el producto.");
     }
   }
 
@@ -328,48 +362,11 @@ function ProductsPage() {
           </div>
         </div>
         {/* resumen */}
-        <div className="row g-3 mt-3 mb-4 mx-1">
-
-          {/* productos activos */}
-          <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-4 p-3 h-100">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted mb-1">Productos activos</p>
-                  <h3 className="fw-bold mb-0">{products.length}</h3>
-                </div>
-                <i className="bi bi-box-seam fs-2 text-success"></i>
-              </div>
-            </div>
-          </div>
-
-          {/* stock crítico */}
-          <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-4 p-3 h-100">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted mb-1">Stock crítico</p>
-                  <h3 className="fw-bold mb-0">{criticalStockCount}</h3>
-                </div>
-                <i className="bi bi-exclamation-triangle fs-2 text-warning"></i>
-              </div>
-            </div>
-          </div>
-
-          {/* movimientos de hoy */}
-          <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-4 p-3 h-100">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted mb-1">Movimientos hoy</p>
-                  <h3 className="fw-bold mb-0">{movementsTodayCount}</h3>
-                </div>
-                <i className="bi bi-arrow-left-right fs-2 text-primary"></i>
-              </div>
-            </div>
-          </div>
-
-        </div>
+        <ProductsStats
+          totalProducts={products.length}
+          criticalStockCount={criticalStockCount}
+          movementsTodayCount={movementsTodayCount}
+        />
         {/* buscador y filtro */}
         <div className="card border-0 shadow-sm rounded-4 mt-5 mx-2 overflow-hidden">
           <div className="d-flex flex-wrap align-items-center gap-3 p-3 border-bottom">
@@ -411,6 +408,27 @@ function ProductsPage() {
                 <option value="Crítico">Crítico</option>
               </select>
             </div>
+            <div className="form-check form-switch">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="showInactiveProducts"
+                checked={showInactiveProducts}
+                onChange={async (e) => {
+                  const checked = e.target.checked;
+
+                  setShowInactiveProducts(checked);
+                  setCurrentPage(1);
+
+                  if (checked) {
+                    await loadInactiveProducts();
+                  }
+                }}
+              />
+              <label className="form-check-label" htmlFor="showInactiveProducts">
+                Mostrar únicamente productos desactivados
+              </label>
+            </div>
             <div className="d-flex gap-2 ms-auto">
               <button
                 type="button"
@@ -434,6 +452,8 @@ function ProductsPage() {
               </button>
             </div>
           </div>
+          <div className="px-3 pt-3">
+          </div>
 
           {/* tabla de productos*/}
           <div className="mt-4">
@@ -441,7 +461,6 @@ function ProductsPage() {
               <ProductsTable
                 filteredProducts={filteredProducts}
                 currentProducts={currentProducts}
-                productsPerPage={productsPerPage}
                 currentPage={currentPage}
                 totalPages={totalPages}
                 indexOfFirstProduct={indexOfFirstProduct}
@@ -449,6 +468,8 @@ function ProductsPage() {
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
                 onPageChange={setCurrentPage}
+                showInactiveProducts={showInactiveProducts}
+                onReactivate={handleReactivateProduct}
               />
             )}
           </div>

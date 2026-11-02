@@ -3,10 +3,10 @@ import type Product from "../interfaces/Product";
 import type ProductCategory from "../interfaces/ProductCategory";
 import type CartItem from "../interfaces/CartItem";
 import type { InvoiceResponse, PaymentMethod, SaleRequest } from "../interfaces/Sale";
-import { getAllProducts } from "../services/ProductService";
+import { getAllProducts, searchProductByCode } from "../services/ProductService";
 import { getActiveProductCategories } from "../services/ProductCategoryService";
 import { createSale } from "../services/SaleService";
-import { showError } from "../utils/alerts";
+import { showError, showWarning } from "../utils/alerts";
 import { formatCurrency } from "../utils/formatCurrency";
 import Button from "../components/atoms/Button";
 import ProductSearchBar from "../components/molecules/ProductSearchBar";
@@ -17,7 +17,7 @@ import CartRow from "../components/molecules/CartRow";
 import PaymentSummary from "../components/molecules/PaymentSummary";
 import InvoiceModal from "../components/organism/sales/InvoiceModal";
 
-const PAGE_SIZE = 6; // productos por página (llena filas completas de 2 o de 3)
+const PAGE_SIZE = 6; // productos por página
 
 export default function NewSalePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,6 +25,7 @@ export default function NewSalePage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true); // true mientras se cargan los productos
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
   const [amountReceived, setAmountReceived] = useState("");
@@ -40,6 +41,8 @@ export default function NewSalePage() {
         setCategories(await getActiveProductCategories());
       } catch (err: any) {
         showError(err, "No se pudieron cargar los productos");
+      } finally {
+        setLoading(false);
       }
     }
     loadData();
@@ -63,7 +66,7 @@ export default function NewSalePage() {
     return matchesCategory && matchesText;
   });
 
-  // paginación del catálogo. solo se muestran los productos de la página actual
+  // paginación del catálogo, solo se muestran los productos de la página actual
   const totalPages = Math.ceil(visibleProducts.length / PAGE_SIZE);
   const page = Math.min(currentPage, Math.max(totalPages, 1)); // por si la lista se acorta y la página ya no existe
   const pageProducts = visibleProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -79,15 +82,25 @@ export default function NewSalePage() {
     setCurrentPage(1);
   }
 
-  // total de la venta: suma de precio por cantidad de cada línea
+  // total de la venta, suma de precio por cantidad de cada línea
   let total = 0;
   for (const item of cart) {
     total = total + item.product.unitPrice * item.quantity;
   }
 
-
+  
   const cashIsEnough = amountReceived !== "" && Number(amountReceived) >= total;
   const canPay = cart.length > 0 && (paymentMethod === "TARJETA" || cashIsEnough);
+
+  // mensajes que explican por qué el botón de cobrar está desactivado
+  let payHint = "";
+  if (cart.length === 0) {
+    payHint = "Debes agregar productos al carrito";
+  } else if (paymentMethod === "EFECTIVO" && amountReceived === "") {
+    payHint = "Ingresa el monto recibido para poder cobrar";
+  } else if (paymentMethod === "EFECTIVO" && !cashIsEnough) {
+    payHint = "El monto recibido no alcanza para cubrir el total";
+  }
 
   // agrega el producto al detalle, o le suma una unidad si ya estaba
   function handleAdd(product: Product) {
@@ -97,10 +110,12 @@ export default function NewSalePage() {
       setCart([...cart, { product: product, quantity: 1 }]);
     } else if (existing.quantity < product.productAmount) {
       handleQuantityChange(product, existing.quantity + 1);
+    } else {
+      showWarning("Sin más existencias", `Solo hay ${product.productAmount} unidades de "${product.name}"`);
     }
   }
 
-  // cambia la cantidad de una línea. si llega a 0 la quita del detalle
+  // cambia la cantidad de una línea; si llega a 0 la quita del detalle
   function handleQuantityChange(product: Product, quantity: number) {
     if (quantity <= 0) {
       setCart(cart.filter((item) => item.product.id !== product.id));
@@ -136,11 +151,37 @@ export default function NewSalePage() {
       setSaving(false);
     }
 
-    refreshProducts(); // el stock cambió (o pudo haber cambiado), se actualiza el catálogo
+    refreshProducts(); // si el stock cambió (o pudo haber cambiado), se actualiza el catálogo
   }
 
-  // pendiente: aquí se agregará por código de barras al presionar Enter
-  function handleSearchSubmit() {}
+  // al presionar Enter (o al escanear un código) se busca el producto por código y se agrega al detalle
+  async function handleSearchSubmit() {
+    const code = searchText.trim();
+    if (code === "") {
+      return;
+    }
+
+    try {
+      const product = await searchProductByCode(code);
+
+      if (product.productAmount <= 0) {
+        showWarning("Producto sin existencias", `"${product.name}" no tiene existencias disponibles`);
+        return;
+      }
+
+      handleAdd(product);
+      handleSearchChange(""); // se limpia el buscador para el siguiente producto
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        // no hay un producto con ese código: el texto queda como búsqueda por nombre
+        if (visibleProducts.length === 0) {
+          showWarning("Sin resultados", `No se encontró ningún producto con "${code}"`);
+        }
+      } else {
+        showError(err, "No se pudo buscar el producto");
+      }
+    }
+  }
 
   return (
     <div className="p-4">
@@ -158,9 +199,16 @@ export default function NewSalePage() {
             <CategoryFilter categories={categories} selectedId={selectedCategoryId} onSelect={handleCategoryChange} />
           </div>
 
-          {visibleProducts.length === 0 ? (
-            <p className="text-muted">No hay productos disponibles.</p>
-          ) : (
+          {loading && (
+            <div className="text-center text-muted py-5">
+              <div className="spinner-border text-success mb-2" role="status"></div>
+              <p className="mb-0">Cargando productos...</p>
+            </div>
+          )}
+
+          {!loading && visibleProducts.length === 0 && <p className="text-muted">No hay productos disponibles.</p>}
+
+          {!loading && visibleProducts.length > 0 && (
             <>
               <div className="row g-3">
                 {pageProducts.map((product) => (
@@ -214,10 +262,12 @@ export default function NewSalePage() {
               />
             </div>
 
-            <Button variant="success" className="w-100 d-flex justify-content-between mt-3" disabled={!canPay || saving} onClick={handleCompleteSale}>
-              <span>{saving ? "Registrando..." : "Completar venta"}</span>
-              <span>{formatCurrency(total)}</span>
-            </Button>
+            <div className="mt-3" title={payHint}>
+              <Button variant="success" className="w-100 d-flex justify-content-between" disabled={!canPay || saving} onClick={handleCompleteSale}>
+                <span>{saving ? "Registrando..." : "Completar venta"}</span>
+                <span>{formatCurrency(total)}</span>
+              </Button>
+            </div>
           </div>
         </div>
 
