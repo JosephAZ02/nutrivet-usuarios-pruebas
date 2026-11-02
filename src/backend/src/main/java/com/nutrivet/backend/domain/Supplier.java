@@ -16,6 +16,7 @@ public class Supplier {
 
 	private String name;
 	private String email;
+	private String identificationNumber;
 
 	public int getId() {
 		return id;
@@ -40,4 +41,13 @@ public class Supplier {
 	public void setEmail(String email) {
 		this.email = email;
 	}
+
+	public String getIdentificationNumber() {
+		return identificationNumber;
+	}
+
+	public void setIdentificationNumber(String identificationNumber) {
+		this.identificationNumber = identificationNumber;
+	}
+
 }

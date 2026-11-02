@@ -1,7 +1,6 @@
 package com.nutrivet.backend.domain;
 
 import java.time.LocalDate;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,12 +15,13 @@ public class ClientInstallment {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	private double amount;
-	private LocalDate installmentDate;
+
+	private double amount; 
+	private LocalDate installmentDate; 
 	private int idReceivableAccount;
 
-	@Column(name = "client_id")
-	private int idClient;
+	@Column(name = "client_id", length = 12)
+	private String idClient; 
 
 	public int getId() {
 		return id;
@@ -55,11 +55,11 @@ public class ClientInstallment {
 		this.idReceivableAccount = idReceivableAccount;
 	}
 
-	public int getIdClient() {
+	public String getIdClient() {
 		return idClient;
 	}
 
-	public void setIdClient(int idClient) {
+	public void setIdClient(String idClient) {
 		this.idClient = idClient;
 	}
 }
