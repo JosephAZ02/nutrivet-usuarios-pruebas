@@ -1,5 +1,7 @@
 import type Product from "../../../interfaces/Product";
 
+
+
 interface ProductsTableProps {
     filteredProducts: Product[];
     currentProducts: Product[];

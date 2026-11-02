@@ -12,7 +12,7 @@ import { getCriticalStockProducts } from "../services/ProductService";
 import { getAllInventoryMovements } from "../services/InventoryMovementService";
 import ProductsStats from "../components/organism/products/ProductsStats";
 import { showError, showSuccess } from "../utils/alerts";
-
+import { useAuth } from "../context/AuthContext";
 
 
 
@@ -36,6 +36,11 @@ function ProductsPage() {
   const [categoryName, setCategoryName] = useState("");
   const [savingCategory, setSavingCategory] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+
+  const { hasPermission } = useAuth();
+
+
   // para crear nuevo producto
   const [productForm, setProductForm] = useState<ProductForm>({
     code: "", name: "", category: { id: 0 }, unitPrice: 0, productAmount: 0, productCost: 0, transportCost: 0, bulkSale: false
@@ -107,7 +112,8 @@ function ProductsPage() {
 
   useEffect(() => { loadInventoryStats(); }, []);
 
-  useEffect(() => {async function loadData() {
+  useEffect(() => {
+    async function loadData() {
       try {
         setLoading(true);
         setError("");
@@ -163,7 +169,7 @@ function ProductsPage() {
       };
 
       await addProduct(productPayload, productImage);
-      showSuccess("Producto registrado","El producto se registró correctamente.");
+      showSuccess("Producto registrado", "El producto se registró correctamente.");
 
       // actualizar lista de productos
       const updatedProducts = await getAllProducts();
@@ -204,6 +210,11 @@ function ProductsPage() {
 
   async function handleUpdateProduct() {
     if (!editingProduct) return;
+
+    if (hasPermission("PRODUCT_UPDATE") === false) {
+      showError(error, "No tienes permiso para actualizar productos.");
+      return;
+    }
 
     if (!productForm.code.trim() || !productForm.name.trim() || productForm.category.id === 0) {
       showError(error, "Completa el código, nombre y categoría del producto.");
@@ -267,6 +278,11 @@ function ProductsPage() {
     }).then((result) => result.isConfirmed);
 
     if (!confirmed) return;
+
+    if (hasPermission("PRODUCT_DELETE") === false) {
+      showError(error, "No tienes permiso para desactivar productos.");
+      return;
+    }
 
     try {
       await deleteProduct(product.id);
@@ -430,26 +446,30 @@ function ProductsPage() {
               </label>
             </div>
             <div className="d-flex gap-2 ms-auto">
-              <button
-                type="button"
-                className="btn btn-success px-4 py-2 fw-semibold rounded-3 shadow-sm"
-                onClick={() => {
-                  resetProductForm();
-                  setShowProductModal(true);
-                }}
-              >
-                <i className="bi bi-plus-lg me-2"></i>
-                Agregar producto
-              </button>
 
-              <button
-                type="button"
-                className="btn btn-outline-secondary px-4 py-2 fw-semibold rounded-3"
-                onClick={() => setShowCategoryModal(true)}
-              >
-                <i className="bi bi-tags me-2"></i>
-                Agregar categoría
-              </button>
+              {hasPermission("PRODUCT_CREATE") && (
+                <button
+                  type="button"
+                  className="btn btn-success px-4 py-2 fw-semibold rounded-3 shadow-sm"
+                  onClick={() => {
+                    resetProductForm();
+                    setShowProductModal(true);
+                  }}
+                >
+                  <i className="bi bi-plus-lg me-2"></i>
+                  Agregar producto
+                </button>)}
+
+              {hasPermission("PRODUCT_CATEGORY_CREATE") && (
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary px-4 py-2 fw-semibold rounded-3"
+                  onClick={() => setShowCategoryModal(true)}
+                >
+                  <i className="bi bi-tags me-2"></i>
+                  Agregar categoría
+                </button>
+              )}
             </div>
           </div>
           <div className="px-3 pt-3">
