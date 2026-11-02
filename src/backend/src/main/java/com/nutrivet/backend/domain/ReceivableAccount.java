@@ -1,5 +1,6 @@
 package com.nutrivet.backend.domain;
 
+import java.time.LocalDate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,13 +16,17 @@ public class ReceivableAccount {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 
-	private double totalAmount;
-	private double currentAmount;
+	private double totalAmount; 
+	private double currentAmount; 
+
+	private double monthlyInstallment; 
+	private LocalDate dueDate; 
 
 	@Column(name = "invoice_id")
 	private int idInvoice;
-	@Column(name = "client_id")
-	private int idClient;
+
+	@Column(name = "client_id", length = 12)
+	private String idClient; 
 
 	public int getId() {
 		return id;
@@ -47,6 +52,22 @@ public class ReceivableAccount {
 		this.currentAmount = currentAmount;
 	}
 
+	public double getMonthlyInstallment() {
+		return monthlyInstallment;
+	}
+
+	public void setMonthlyInstallment(double monthlyInstallment) {
+		this.monthlyInstallment = monthlyInstallment;
+	}
+
+	public LocalDate getDueDate() {
+		return dueDate;
+	}
+
+	public void setDueDate(LocalDate dueDate) {
+		this.dueDate = dueDate;
+	}
+
 	public int getIdInvoice() {
 		return idInvoice;
 	}
@@ -55,11 +76,11 @@ public class ReceivableAccount {
 		this.idInvoice = idInvoice;
 	}
 
-	public int getIdClient() {
+	public String getIdClient() {
 		return idClient;
 	}
 
-	public void setIdClient(int idClient) {
+	public void setIdClient(String idClient) {
 		this.idClient = idClient;
 	}
 }
