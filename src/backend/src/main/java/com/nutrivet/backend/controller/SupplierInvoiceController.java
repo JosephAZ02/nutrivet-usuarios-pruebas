@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.nutrivet.backend.domain.SupplierInvoice;
+import com.nutrivet.backend.dto.SupplierInvoiceReviewRequest;
 import com.nutrivet.backend.service.SupplierInvoiceService;
 import com.nutrivet.backend.service.SupplierService;
 
@@ -43,41 +44,29 @@ public class SupplierInvoiceController {
         return supplierInvoiceService.getById(id);
     }
 
-    @PostMapping("/add")
-    @PreAuthorize("hasAuthority('SUPPLIER_INVOICE_CREATE')")
-    public SupplierInvoice addSupplierInvoice(@RequestBody SupplierInvoice supplierInvoice) {
-        if (supplierInvoice.getCondition() == null ||
-                supplierInvoice.getCondition().isBlank()) {
-            throw new IllegalArgumentException("La condición es obligatoria.");
+    @PutMapping("/{id}/review")
+    @PreAuthorize("hasAuthority('SUPPLIER_INVOICE_UPDATE')")
+    public SupplierInvoice reviewSupplierInvoice(@PathVariable int id,
+            @RequestBody SupplierInvoiceReviewRequest request) {
+        SupplierInvoice invoice = supplierInvoiceService.getById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Factura no encontrada."));
+
+        if (!"CASH".equals(request.getCondition()) && !"CREDIT".equals(request.getCondition())) {
+            throw new IllegalArgumentException("La condición de pago no es válida.");
         }
-        if (supplierInvoice.getCondition().equals("CASH")) {
-            supplierInvoice.setDueDate(LocalDate.now());
-            supplierInvoice.setState("PAID");
-        } else {
-            supplierInvoice.setState("PENDING");
-            supplierInvoice.setDueDate(supplierInvoice.getDate().plusDays(supplierInvoice.getPeriod()));
+        if (request.getDueDate() == null || request.getDueDate().isBefore(invoice.getDate())) {
+            throw new IllegalArgumentException("La fecha de vencimiento no es válida.");
         }
-        if (supplierInvoice.getCondition() == null || supplierInvoice.getCondition().isEmpty()) {
-            throw new IllegalArgumentException("La condición de la factura no puede estar vacía.");
-        }
-        if (supplierInvoice.getPeriod() <= 0 && supplierInvoice.getCondition().equals("CREDIT")) {
-            throw new IllegalArgumentException("El período de la factura debe ser mayor a cero.");
-        }
-        if (supplierInvoice.getDueDate() == null) {
-            throw new IllegalArgumentException("La fecha de vencimiento de la factura no puede estar vacía.");
-        }
-        if (supplierInvoice.getDueDate().isBefore(supplierInvoice.getDate())) {
-            throw new IllegalArgumentException(
-                    "La fecha de vencimiento no puede ser anterior a la fecha de la factura.");
-        }
-        if (supplierInvoice.getTotalAmount() <= 0) {
-            throw new IllegalArgumentException("El monto total de la factura debe ser mayor a cero.");
-        }
-        if (supplierService.getById(supplierInvoice.getIdSupplier()).isEmpty()) {
-            throw new IllegalArgumentException("El ID del proveedor no existe en la base de datos.");
+        if ("CREDIT".equals(request.getCondition()) && request.getPeriod() <= 0) {
+            throw new IllegalArgumentException("El período debe ser mayor que cero.");
         }
 
-        return supplierInvoiceService.add(supplierInvoice);
+        invoice.setCondition(request.getCondition());
+        invoice.setPeriod(request.getPeriod());
+        invoice.setDueDate(request.getDueDate());
+        invoice.setState("CASH".equals(request.getCondition()) ? "PAID" : "PENDING");
+        invoice.setPendingAmount("CASH".equals(request.getCondition()) ? 0 : invoice.getTotalAmount());
+        return supplierInvoiceService.update(invoice);
     }
 
     @PutMapping("/{id}/markPaid")

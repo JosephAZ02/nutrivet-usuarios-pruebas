@@ -33,6 +33,10 @@ public class SupplierInvoiceService {
         supplierInvoiceRepository.deleteById(id);
     }
 
+    public SupplierInvoice update(SupplierInvoice supplierInvoice) {
+        return supplierInvoiceRepository.save(supplierInvoice);
+    }
+
     public boolean isOverdue(SupplierInvoice invoice) {
         return ("PENDING").equals(invoice.getState()) && invoice.getDueDate() != null
                 && invoice.getDueDate().isBefore(LocalDate.now());

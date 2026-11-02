@@ -14,6 +14,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import ReportsPage from './pages/ReportsPage';
 import AppLayout from './components/templates/AppLayout';
 import RoutePermission from './components/organism/RoutePermission';
+import { AccountsPayablePage } from './pages/AccountsPayablePage';
 
 function App() {
   return (
@@ -30,11 +31,11 @@ function App() {
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/new-sale" element={<NewSalePage />} />
-
+            <Route path="/accounts-payable" element={<AccountsPayablePage />} />
             <Route element={<RoutePermission requiredPermission="USER_CREATE" />}>
               <Route path="/roles-users" element={<RolesUsersPage />} />
             </Route>
-            
+
           </Route>
         </Route>
 

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nutrivet.backend.domain.SupplierPayment;
-import com.nutrivet.backend.service.SupplierInvoiceService;
 import com.nutrivet.backend.service.SupplierPaymentService;
 
 @RestController
@@ -21,12 +20,9 @@ import com.nutrivet.backend.service.SupplierPaymentService;
 public class SupplierPaymentController {
 
     private final SupplierPaymentService supplierPaymentService;
-    private final SupplierInvoiceService supplierInvoiceService;
 
-    public SupplierPaymentController(SupplierPaymentService supplierPaymentService,
-            SupplierInvoiceService supplierInvoiceService) {
+    public SupplierPaymentController(SupplierPaymentService supplierPaymentService) {
         this.supplierPaymentService = supplierPaymentService;
-        this.supplierInvoiceService = supplierInvoiceService;
     }
 
     @GetMapping("/all")
@@ -45,25 +41,10 @@ public class SupplierPaymentController {
     @PreAuthorize("hasAuthority('SUPPLIER_PAYMENT_CREATE')")
     public SupplierPayment addSupplierPayment(@RequestBody SupplierPayment supplierPayment) {
 
-        if (supplierPayment.getAmount() <= 0) {
-            throw new IllegalArgumentException("El monto del pago debe ser mayor a cero.");
-        }
-        if (supplierPayment.getPaymentDate() == null) {
-
-            throw new IllegalArgumentException("La fecha de pago es obligatoria.");
-        }
-        if (supplierPayment.getIdSupplierInvoice() == 0) {
+        if (supplierPayment.getIdSupplierInvoice() <= 0) {
             throw new IllegalArgumentException("El ID de la factura del proveedor es obligatorio.");
         }
-        if (supplierInvoiceService.getById(supplierPayment.getIdSupplierInvoice()).isEmpty()) {
-            throw new IllegalArgumentException("La factura del proveedor no existe.");
-        }
-        if (supplierPayment.getAmount() > supplierInvoiceService.getById(supplierPayment.getIdSupplierInvoice()).get()
-                .getTotalAmount()) {
-            throw new IllegalArgumentException("El monto del pago no puede ser mayor al total de la factura.");
-        }
-
-        return supplierPaymentService.add(supplierPayment);
+        return supplierPaymentService.registerPayment(supplierPayment);
     }
 
 }

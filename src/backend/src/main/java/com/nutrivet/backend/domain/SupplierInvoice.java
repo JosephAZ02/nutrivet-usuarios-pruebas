@@ -19,11 +19,14 @@ public class SupplierInvoice {
 
 	private LocalDate date;
 	private double totalAmount;
+	private double pendingAmount;
 	private String state;
 	@Column(name = "invoice_condition") // palabra reservada por mysql condition
 	private String condition;
-	private int period;
+	private Integer period;
 	private LocalDate dueDate;
+	@Column(name = "electronic_key", unique = true, length = 100)
+	private String electronicKey;
 
 	@Column(name = "supplier_id")
 	private int idSupplier;
@@ -52,6 +55,14 @@ public class SupplierInvoice {
 		this.totalAmount = totalAmount;
 	}
 
+	public double getPendingAmount() {
+		return pendingAmount;
+	}
+
+	public void setPendingAmount(double pendingAmount) {
+		this.pendingAmount = pendingAmount;
+	}
+
 	public String getState() {
 		return state;
 	}
@@ -68,11 +79,11 @@ public class SupplierInvoice {
 		this.condition = condition;
 	}
 
-	public int getPeriod() {
+	public Integer getPeriod() {
 		return period;
 	}
 
-	public void setPeriod(int period) {
+	public void setPeriod(Integer period) {
 		this.period = period;
 	}
 
@@ -82,6 +93,14 @@ public class SupplierInvoice {
 
 	public void setDueDate(LocalDate dueDate) {
 		this.dueDate = dueDate;
+	}
+
+	public String getElectronicKey() {
+		return electronicKey;
+	}
+
+	public void setElectronicKey(String electronicKey) {
+		this.electronicKey = electronicKey;
 	}
 
 	public int getIdSupplier() {

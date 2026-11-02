@@ -24,9 +24,6 @@ public class SupplierPayment {
     @Column(name = "supplier_invoice_id")
     private int idSupplierInvoice;
 
-    @Column(name = "user_id")
-    private int idUser;
-
     public int getId() {
         return id;
     }
@@ -67,11 +64,4 @@ public class SupplierPayment {
         this.idSupplierInvoice = idSupplierInvoice;
     }
 
-    public int getIdUser() {
-        return idUser;
-    }
-
-    public void setIdUser(int idUser) {
-        this.idUser = idUser;
-    }
 }

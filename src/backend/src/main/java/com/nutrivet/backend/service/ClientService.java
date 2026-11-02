@@ -65,7 +65,8 @@ public class ClientService {
     public Client add(Client client) {
         validateClient(client);
 
-        // como la cédula la escribe el usuario, save() pisaría al cliente existente si no se revisa
+        // como la cédula la escribe el usuario, save() pisaría al cliente existente si
+        // no se revisa
         if (clientRepository.existsById(client.getId())) {
             throw new RuntimeException("Ya existe un cliente con esa cédula");
         }

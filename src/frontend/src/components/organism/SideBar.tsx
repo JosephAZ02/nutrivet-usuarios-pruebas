@@ -11,7 +11,7 @@ function SideBar() {
     const navigate = useNavigate();
     const [activeItem, setActiveItem] = useState("");
     const { logout, hasPermission } = useAuth();
-    
+
     return (
         <div className="d-flex flex-column flex-shrink-0  text-bg-dark align-items-left" id="sidebar">
             <a id="title" href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
@@ -49,6 +49,14 @@ function SideBar() {
                         <i className="bi bi-file-earmark-bar-graph me-2" aria-hidden="true"></i>
                         Reportes
                     </Button>
+                </li>
+                <li>
+
+                    <Button className={activeItem === "cuentas-por-pagar" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/accounts-payable"); setActiveItem("cuentas-por-pagar"); }} >
+                        <i className="bi bi-person me-2" aria-hidden="true"></i>
+                        Cuentas por pagar
+                    </Button>
+
                 </li>
                 <li>
                     {hasPermission("USER_CREATE") && (
