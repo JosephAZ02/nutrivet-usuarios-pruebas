@@ -1,7 +1,8 @@
 package com.nutrivet.backend.controller;
 
-import java.util.List;
-import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,32 +21,66 @@ import com.nutrivet.backend.service.ClientService;
 public class ClientController {
 
     private final ClientService clientService;
+
     public ClientController(ClientService clientService) {
         this.clientService = clientService;
     }
 
     @GetMapping("/all")
-    public List<Client> getAllClients() {
-        return clientService.getAll();
+    @PreAuthorize("hasAuthority('CLIENT_GET_ALL')")
+    public ResponseEntity<?> getAllClients() {
+        try {
+            return ResponseEntity.ok(clientService.getAll());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al consultar los clientes");
+        }
     }
 
     @GetMapping("/get/{id}")
-    public Optional<Client> getClientById(@PathVariable int id) {
-        return clientService.getById(id);
+    @PreAuthorize("hasAuthority('CLIENT_GET_BY_ID')")
+    public ResponseEntity<?> getClientById(@PathVariable String id) {
+        try {
+            return clientService.getById(id).<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("El cliente no existe"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al consultar el cliente");
+        }
     }
 
     @PostMapping("/add")
-    public Client addClient(@RequestBody Client client) {
-        return clientService.add(client);
+    @PreAuthorize("hasAuthority('CLIENT_CREATE')")
+    public ResponseEntity<?> addClient(@RequestBody Client client) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(clientService.add(client));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
-    @PutMapping("/update")
-    public Client updateClient(@RequestBody Client client) {
-        return clientService.add(client);
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAuthority('CLIENT_UPDATE')")
+    public ResponseEntity<?> updateClient(@PathVariable String id, @RequestBody Client client) {
+        try {
+            return ResponseEntity.ok(clientService.update(id, client));
+        } catch (RuntimeException e) {
+            if ("El cliente no existe".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteClient(@PathVariable int id) {
-        clientService.deleteById(id);
+    @PreAuthorize("hasAuthority('CLIENT_DELETE')")
+    public ResponseEntity<?> deleteClient(@PathVariable String id) {
+        try {
+            clientService.deleteById(id);
+            return ResponseEntity.ok("El cliente fue eliminado exitosamente");
+        } catch (RuntimeException e) {
+            if ("El cliente no existe".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

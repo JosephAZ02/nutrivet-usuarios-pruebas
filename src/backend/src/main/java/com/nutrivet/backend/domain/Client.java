@@ -2,8 +2,6 @@ package com.nutrivet.backend.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -11,9 +9,10 @@ import jakarta.persistence.Table;
 @Table(name = "client")
 public class Client {
 
+	// la cédula del cliente es su identificador: se escribe, no se genera
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
+	@Column(length = 12)
+	private String id;
 
 	private String name;
 	private String phone;
@@ -21,11 +20,11 @@ public class Client {
 	@Column(nullable = true)
 	private String email;
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
