@@ -3,6 +3,7 @@ package com.nutrivet.backend.controller;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -61,10 +62,16 @@ public class RoleController {
         return org.springframework.http.ResponseEntity.ok("Rol actualizado correctamente");
     }
 
+
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('USER_CREATE')")
-    public org.springframework.http.ResponseEntity<?> deleteRole(@PathVariable int id) {
-        roleService.deleteById(id);
-        return org.springframework.http.ResponseEntity.ok("Rol eliminado correctamente");
+    public ResponseEntity<?> deleteRole(@PathVariable Integer id) {
+        try {
+            roleService.deleteById(id);
+            return ResponseEntity.ok("Rol eliminado exitosamente");
+        } catch (RuntimeException e) {
+            
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

@@ -39,6 +39,7 @@ export default function PermissionsModal({
                                         type="checkbox"
                                         checked={rolePermissions.includes(permission.id)}
                                         onChange={() => onTogglePermission(permission.id)}
+                                        disabled={selectedRole.id === 1 && rolePermissions.includes(permission.id)} 
                                     />
                                     <div>
                                         <strong>{permission.name}</strong>

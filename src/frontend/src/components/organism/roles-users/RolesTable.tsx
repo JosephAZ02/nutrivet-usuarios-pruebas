@@ -5,9 +5,10 @@ interface Props {
     roles: RoleResponse[];
     onManagePermissions: (role: RoleResponse) => void;
     onEditRole: (role: RoleResponse) => void; 
+    onDeleteRole: (role: RoleResponse) => void;
 }
 
-export default function RolesTable({ roles, onManagePermissions, onEditRole }: Props) {
+export default function RolesTable({ roles, onManagePermissions, onEditRole, onDeleteRole }: Props) {
     return (
         <div className="table-responsive shadow-sm rounded">
             <table className="table table-hover align-middle mb-0">
@@ -27,6 +28,9 @@ export default function RolesTable({ roles, onManagePermissions, onEditRole }: P
                                 <button className="btn btn-sm btn-outline-primary me-2" onClick={() => onManagePermissions(role)}>
                                     Permisos
                                 </button>
+                                <button className="btn btn-sm btn-outline-danger me-2" onClick={() => onDeleteRole(role)}>
+                                    Eliminar
+                                </button> 
                                 <button className="btn btn-sm btn-outline-warning" onClick={() => onEditRole(role)}>
                                     Editar
                                 </button>

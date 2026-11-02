@@ -10,6 +10,7 @@ import RolesTable from '../components/organism/roles-users/RolesTable';
 import PermissionsModal from '../components/organism/roles-users/PermissionsModals';
 import UserModal from '../components/organism/roles-users/UserModal';
 import RoleModal from '../components/organism/roles-users/RolesModal';
+import { showConfirm, showError, showSuccess } from '../utils/alerts';
 
 export default function RolesUsersPage() {
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -78,12 +79,17 @@ export default function RolesUsersPage() {
   const handleSavePermissions = async () => {
     if (!selectedRole) return;
     setSaving(true);
+    if (await showConfirm("Confirmación", `¿Está seguro de actualizar los permisos del rol ${selectedRole.name}?`, "Actualizar") === false) {
+      setSaving(false);
+      return;
+    }
     try {
       await RolePermissionService.update(selectedRole.id, rolePermissions);
-      setMessage({ type: 'success', text: 'Permisos actualizados' });
-      setTimeout(() => setShowModal(false), 1500);
+      showSuccess("Permisos actualizados", `Los permisos del rol ${selectedRole.name} han sido actualizados correctamente.`);
+      setTimeout(() => setShowModal(false), 1);
     } catch (err) {
-      setMessage({ type: 'danger', text: 'Error al guardar' });
+      showError(err, 'Error al actualizar permisos');
+      setTimeout(() => setShowModal(false), 1);
     } finally { setSaving(false); }
   };
 
@@ -108,15 +114,20 @@ export default function RolesUsersPage() {
     setSavingRole(true);
     try {
       if (isEditingRole && editingRoleId) {
+        if (await showConfirm("Confirmación", `¿Está seguro de actualizar el rol ${roleFormData.name}?`, "Actualizar") === false) {
+          setSavingRole(false);
+          return;
+        }
         await RoleService.update(editingRoleId, roleFormData);
+        showSuccess("Rol actualizado", `El rol ${roleFormData.name} ha sido actualizado correctamente.`);
       } else {
         await RoleService.create(roleFormData);
+        showSuccess("Rol guardado", `El rol ${roleFormData.name} ha sido guardado correctamente.`);
       }
-      setRoleMessage({ type: 'success', text: 'Guardado exitosamente' });
       fetchData();
-      setTimeout(() => setShowRoleModal(false), 1500);
+      setTimeout(() => setShowRoleModal(false), 1);
     } catch (err: any) {
-      setRoleMessage({ type: 'danger', text: err.response?.data || 'Error al guardar' });
+      showError(err, 'Error al guardar el rol');
     } finally { setSavingRole(false); }
   };
 
@@ -142,29 +153,52 @@ export default function RolesUsersPage() {
     setSavingUser(true);
     try {
       if (isEditing && editingUserId) {
+        if (await showConfirm("Confirmación", `¿Está seguro de actualizar el usuario ${userFormData.username}?`, "Actualizar") === false) {
+          setSavingUser(false);
+          return;
+        }
         await UserService.update(editingUserId, userFormData);
+        showSuccess("Usuario actualizado", `El usuario ${userFormData.username} ha sido actualizado correctamente.`);
       } else {
         await UserService.create(userFormData);
+        showSuccess("Usuario guardado", `El usuario ${userFormData.username} ha sido guardado correctamente.`);
       }
-      setUserMessage({ type: 'success', text: 'Guardado exitosamente' });
       fetchData();
-      setTimeout(() => setShowUserModal(false), 1500);
+      setTimeout(() => setShowUserModal(false), 1);
     } catch (err: any) {
-      setUserMessage({ type: 'danger', text: err.response?.data || 'Error al guardar' });
+      showError(err, 'Error al guardar el usuario');
     } finally { setSavingUser(false); }
   };
 
   const handleDeleteUser = async (user: UserResponse) => {
-    if (!window.confirm(`¿Está seguro de eliminar al usuario ${user.name}?`)) return;
+
+    if (await showConfirm("Confirmación", `¿Está seguro de eliminar al usuario ${user.name}?`, "Eliminar") === false) {
+      return;
+    }
 
     try {
       await UserService.delete(user.id);
-      setUserMessage({ type: 'success', text: 'Usuario eliminado exitosamente' });
+      showSuccess("Usuario eliminado", `El usuario ${user.name} ha sido eliminado correctamente.`);
       fetchData();
     } catch (err: any) {
-      setUserMessage({ type: 'danger', text: err.response?.data || 'Error al eliminar usuario' });
+      showError(err, 'Error al eliminar el usuario');
     }
   };
+
+  const handleDeleteRole = async (role: RoleResponse) => {
+    if (await showConfirm("Confirmación", `¿Está seguro de eliminar el rol ${role.name}?`, "Eliminar") === false) {
+      return;
+    }
+
+    try {
+      await RoleService.delete(role.id);
+      showSuccess("Rol eliminado", `El rol ${role.name} ha sido eliminado correctamente.`);
+      fetchData();
+    } catch (err: any) {
+      showError(err, 'Error al eliminar el rol');
+    }
+  };
+
 
   if (loading) return <div className="container mt-5"><div className="spinner-border text-success" /></div>;
 
@@ -183,6 +217,7 @@ export default function RolesUsersPage() {
           roles={roles}
           onManagePermissions={handleManagePermissions}
           onEditRole={handleOpenEditRoleModal}
+          onDeleteRole={handleDeleteRole}
         />
       </div>
 

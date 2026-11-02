@@ -94,10 +94,10 @@ public class ClientService {
                 .orElseThrow(() -> new RuntimeException("El cliente no existe"));
 
         // un cliente con cuentas por cobrar no se puede borrar
-        if (receivableAccountRepository.existsByIdClient(client.getId())) {
-            throw new RuntimeException("El cliente tiene cuentas por cobrar y no se puede eliminar");
-        }
+       // if (receivableAccountRepository.existsByIdClient(client.getId())) {
+          //  throw new RuntimeException("El cliente tiene cuentas por cobrar y no se puede eliminar");
+        //}
 
-        clientRepository.deleteById(id);
+        //clientRepository.deleteById(id);
     }
 }

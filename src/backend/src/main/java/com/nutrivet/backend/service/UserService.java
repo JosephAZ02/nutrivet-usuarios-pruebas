@@ -38,7 +38,7 @@ public class UserService {
             long adminCount = userRepository.countByIdRole(ADMIN_ROLE_ID);
             if (adminCount <= 1) {
                 throw new RuntimeException(
-                        "ACCIÓN DENEGADA: No se puede degradar al último Administrador del sistema.");
+                        "No se puede degradar al último Administrador del sistema.");
             }
         }
     }
@@ -51,7 +51,7 @@ public class UserService {
             long adminCount = userRepository.countByIdRole(ADMIN_ROLE_ID);
             if (adminCount <= 1) {
                 throw new RuntimeException(
-                        "ACCIÓN DENEGADA: No se puede eliminar al último Administrador del sistema.");
+                        "No se puede eliminar al último Administrador del sistema.");
             }
         }
     }

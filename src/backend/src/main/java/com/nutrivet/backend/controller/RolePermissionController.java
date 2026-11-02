@@ -24,7 +24,6 @@ public class RolePermissionController {
     @Autowired 
     private RolePermissionService rolePermissionService;
 
-    // Obtener solo los IDs de los permisos que tiene un rol 
     @GetMapping("/role/{roleId}")
     @PreAuthorize("hasAuthority('USER_CREATE')")
     public List<Integer> getPermissionsByRole(@PathVariable int roleId) {
@@ -33,12 +32,16 @@ public class RolePermissionController {
                 .collect(Collectors.toList());
     }
 
-    // Actualizar los permisos de un rol
+
     @PostMapping("/update/{roleId}")
     @PreAuthorize("hasAuthority('USER_CREATE')")
-    public ResponseEntity<?> updatePermissions(@PathVariable int roleId,
-            @RequestBody UpdatePermissionsRequest request) {
-        rolePermissionService.updateRolePermissions(roleId, request.getPermissionIds());
-        return ResponseEntity.ok("Permisos actualizados correctamente");
+    public ResponseEntity<?> updatePermissions(@PathVariable int roleId, @RequestBody UpdatePermissionsRequest request) {
+        try {
+            rolePermissionService.updateRolePermissions(roleId, request.getPermissionIds());
+            return ResponseEntity.ok("Permisos actualizados correctamente");
+        } catch (RuntimeException e) {
+            
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

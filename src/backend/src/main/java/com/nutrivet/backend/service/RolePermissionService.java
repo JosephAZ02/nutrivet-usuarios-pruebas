@@ -17,8 +17,23 @@ public class RolePermissionService {
 
     @Transactional
     public void updateRolePermissions(int roleId, List<Integer> permissionIds) {
-
         List<RolePermission> currentPermissions = rolePermissionRepository.findByIdRole(roleId);
+
+        if (roleId == 1) {
+            
+            List<Integer> currentIds = currentPermissions.stream()
+                    .map(RolePermission::getIdPermission)
+                    .toList();
+
+            
+            for (Integer currentId : currentIds) {
+                if (permissionIds == null || !permissionIds.contains(currentId)) {
+                    throw new RuntimeException("No puedes quitarle permisos existentes al Administrador. Solo puedes añadir nuevos.");
+                }
+            }
+        }
+
+        
         rolePermissionRepository.deleteAll(currentPermissions);
 
         if (permissionIds != null && !permissionIds.isEmpty()) {

@@ -28,6 +28,9 @@ public class RoleService {
     }
 
     public void deleteById(Integer id) {
+        if (id == 1) {
+            throw new RuntimeException("No se puede eliminar el rol de Administrador.");
+        }
         roleRepository.deleteById(id);
     }
 }

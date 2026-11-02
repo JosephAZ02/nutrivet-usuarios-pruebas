@@ -5,7 +5,7 @@ export function showError(err: any, fallback: string) {
   let message = fallback;
 
   if (err.response?.status === 403) {
-    message = "No tiene permiso para realizar esta acción";
+    message = "No se pudo realizar la acción solicitada";
   } else if (typeof err.response?.data === "string" && err.response.data !== "") {
     message = err.response.data;
   }
