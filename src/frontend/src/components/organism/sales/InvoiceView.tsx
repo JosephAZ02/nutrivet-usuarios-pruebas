@@ -1,6 +1,7 @@
 import type { InvoiceResponse } from "../../../interfaces/Sale";
 import { BUSINESS } from "../../../utils/invoiceBusinessInfo";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { paymentLabel } from "../../../utils/paymentLabel";
 
 interface InvoiceViewProps {
     invoice: InvoiceResponse; 
@@ -8,7 +9,7 @@ interface InvoiceViewProps {
 
 function InvoiceView({ invoice }: InvoiceViewProps) {
     const date = new Date(invoice.date).toLocaleString("es-CR");
-    const method = invoice.paymentMethod === "EFECTIVO" ? "Efectivo" : "Tarjeta";
+    const method = paymentLabel(invoice.paymentMethod);
 
     return (
         <div id="invoice-print">

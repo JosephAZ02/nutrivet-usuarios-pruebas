@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { InvoiceResponse } from "../interfaces/Sale";
 import { BUSINESS } from "./invoiceBusinessInfo";
+import { paymentLabel } from "./paymentLabel";
 
 // la fuente del PDF no tiene el símbolo ₡, por eso los montos se escriben con CRC
 function money(amount: number): string {
@@ -64,7 +65,7 @@ export function exportInvoicePdf(invoice: InvoiceResponse): void {
   addLine("IVA", money(invoice.tax));
   addLine("Total", money(invoice.total), true);
   y = y + 4;
-  addLine("Método de pago", invoice.paymentMethod === "EFECTIVO" ? "Efectivo" : "Tarjeta");
+    addLine("Método de pago", paymentLabel(invoice.paymentMethod));
   if (invoice.paymentMethod === "EFECTIVO") {
     addLine("Monto recibido", money(invoice.amountReceived));
     addLine("Vuelto", money(invoice.change));

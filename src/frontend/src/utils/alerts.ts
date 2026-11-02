@@ -35,3 +35,17 @@ export function showWarning(title: string, text: string) {
     confirmButtonText: "Aceptar",
   });
 }
+
+// pregunta al usuario si desea continuar; devuelve true si presiona el botón de confirmar
+export async function showConfirm(title: string, html: string, confirmText: string): Promise<boolean> {
+  const result = await Swal.fire({
+    icon: "question",
+    title: title,
+    html: html,
+    showCancelButton: true,
+    confirmButtonText: confirmText,
+    cancelButtonText: "Cancelar",
+  });
+
+  return result.isConfirmed;
+}
