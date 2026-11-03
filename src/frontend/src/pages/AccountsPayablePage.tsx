@@ -269,9 +269,10 @@ export function AccountsPayablePage() {
         }
     };
     return (
-        <div>
+        <div className="p-4">
             <small className="text-success fw-semibold text-uppercase">Finanzas</small>
             <h1 className="h3">Cuentas por pagar</h1>
+            <p className="text-muted mb-4">Facturas electrónicas recibidas de proveedores</p>
             <ModalPaymentSupplierInvoice
                 supplierInvoice={selectedInvoice}
                 supplier={selectedSupplier}

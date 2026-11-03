@@ -373,7 +373,8 @@ function ProductsPage() {
         {/*cabecera*/}
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
           <div>
-            <h2 className="fw-bold mb-1">Gestión de productos</h2>
+            <small className="text-success fw-semibold text-uppercase">Catálogo</small>
+            <h1 className="h3 mb-1">Gestión de productos</h1>
             <p className="text-muted mb-0">Administra los productos y sus existencias.</p>
           </div>
         </div>
