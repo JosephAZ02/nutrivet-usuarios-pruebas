@@ -2,7 +2,9 @@ import axios from 'axios';
 
 const api = axios.create({
 
-  baseURL: 'https://nutrivet-api-bbh8hwfagmcdb9a9.chilecentral-01.azurewebsites.net/api', // Cambia esto a la URL de tu API
+
+  baseURL: 'https://nutrivet-api-bbh8hwfagmcdb9a9.chilecentral-01.azurewebsites.net/api',
+
 
 });
 
