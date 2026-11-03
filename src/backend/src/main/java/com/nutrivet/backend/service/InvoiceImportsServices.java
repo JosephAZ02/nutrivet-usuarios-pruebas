@@ -66,16 +66,6 @@ public class InvoiceImportsServices {
     }
 
     @Transactional
-    public SupplierInvoice importInvoice(MultipartFile file) {
-        try {
-            return importInvoice(file.getInputStream(), file.getOriginalFilename(),
-                    "MANUAL-" + file.getOriginalFilename());
-        } catch (IOException exception) {
-            throw new IllegalArgumentException("No se pudo leer el archivo XML.", exception);
-        }
-    }
-
-    @Transactional
     public SupplierInvoice importInvoice(java.io.InputStream inputStream, String fileName, String messageId) {
         ImportedInvoiceData data = xmlInvoiceParser.parseInvoiceData(inputStream);
         String electronicKey = data.getElectronicKey();
@@ -115,6 +105,7 @@ public class InvoiceImportsServices {
 
         SupplierInvoice invoice = new SupplierInvoice();// crear una nueva factura de proveedor
         invoice.setDate(data.getEmissionDate().toLocalDate());
+        invoice.setPeriod(data.getCreditTerm());
         invoice.setTotalAmount(data.getTotalAmount());
         invoice.setPendingAmount(data.getTotalAmount());
         invoice.setState("REVIEW");
