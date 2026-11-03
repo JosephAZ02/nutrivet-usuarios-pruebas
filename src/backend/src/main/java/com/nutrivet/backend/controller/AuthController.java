@@ -32,28 +32,30 @@ public class AuthController {
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
 
-
+    private final UserRepository userRepository;
     
     private final PasswordResetService passwordResetService;
 
 
     public AuthController(AuthenticationManager authenticationManager, UserDetailsService userDetailsService,
-            JwtService jwtService , PasswordResetService passwordService ) {
+            JwtService jwtService , PasswordResetService passwordService, UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
        
         this.jwtService = jwtService;
         
         this.passwordResetService = passwordService;
+        this.userRepository = userRepository;
     }
 
-    @PostMapping("/login")
+   @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Error: " + e.getMessage());
+            return ResponseEntity.status(401).body("Error: Credenciales incorrectas");
         }
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
@@ -63,10 +65,15 @@ public class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
+        
+        User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
+
         Map<String, Object> response = new HashMap<>();
         response.put("token", jwt);
         response.put("permissions", permissions);
-
+        response.put("name", user.getName()); 
+        response.put("username", user.getUsername()); 
+        
         return ResponseEntity.ok(response);
     }
 
