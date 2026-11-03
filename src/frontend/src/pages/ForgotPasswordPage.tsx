@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
         setMessage({ type: '', text: '' });
         try {
             await AuthService.forgotPassword(email);
-            setMessage({ type: 'success', text: 'Si el correo está registrado, recibirás un código. Revisa la consola del servidor (Backend).' });
+            setMessage({ type: 'success', text: 'Si el correo está registrado, recibirás un código. Revisa tu bandeja de entrada.' });
             setStep(2);
         } catch (err: any) {
             setMessage({ type: 'danger', text: 'Error al procesar la solicitud.' });
@@ -39,8 +39,8 @@ export default function ForgotPasswordPage() {
                 return;
             }
             await AuthService.resetPassword(token, newPassword);
-            showSuccess('Éxito', 'Contraseña cambiada correctamente. Redirigiendo al login...');
-            setTimeout(() => navigate('/login'), 2000);
+            showSuccess('Éxito', 'Contraseña cambiada correctamente.');
+            setTimeout(() => navigate('/login'), 1);
         } catch (err: any) {
             showError({ type: 'danger', text: err.response?.data || 'Código inválido o expirado.' }, 'Error al restablecer la contraseña.');
         } finally {
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
                             <label className="form-label-bold">Código de Recuperación</label>
                             <input type="text" className="form-control" required
                                 value={token} onChange={(e) => setToken(e.target.value)}
-                                placeholder="Pega el código de la consola"
+                                placeholder="Pega el código recibido en tu correo"
                             />
                         </div>
                         <div className="mb-4">

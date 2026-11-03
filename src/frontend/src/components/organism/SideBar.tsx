@@ -13,11 +13,8 @@ function SideBar() {
     const { logout, hasPermission, user } = useAuth();
 
     return (
-        <div className="d-flex flex-column flex-shrink-0  text-bg-dark align-items-left" id="sidebar">
-            <a id="title" href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                <span className="fs-4">NutriVet</span>
-            </a>
-            <hr />
+        <div className="d-flex flex-column flex-shrink-0  text-bg-dark align-items-center" id="sidebar">
+            <img onClick={() => navigate("/")} src="/logonutrivet.png" alt="Logo NutriVet" style={{ width: '150px', height: '150px', objectFit: 'contain' }} className="me-2" />
 
             <ul className="nav nav-pills flex-column mb-auto sidebar-nav">
                 <li>
@@ -43,6 +40,14 @@ function SideBar() {
                         <i className="bi bi-boxes me-2" aria-hidden="true"></i>
                         Inventario
                     </Button>
+                </li>
+                <li>
+                    {hasPermission("CLIENT_GET_ALL") && (
+                        <Button className={activeItem === "clientes" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/clients"); setActiveItem("clientes"); }} >
+                            <i className="bi bi-people me-2" aria-hidden="true"></i>
+                            Clientes
+                        </Button>
+                    )}
                 </li>
                 <li>
                     <Button className={activeItem === "reportes" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/reports"); setActiveItem("reportes"); }} >
@@ -80,11 +85,11 @@ function SideBar() {
 
             <hr />
             <div className="d-flex flex-column align-items-center mb-2">
-                
+
                 <span className="text-white fw-bold" style={{ fontSize: '0.9rem' }}>
                     {(user?.name || 'Usuario')}
                 </span>
-                
+
             </div>
 
             <div className="align-items-center text-center px-3 pb-3">
