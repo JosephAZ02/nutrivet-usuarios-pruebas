@@ -152,8 +152,8 @@ function ProductsPage() {
       return;
     }
 
-    if (productImage && !["image/jpeg", "image/png"].includes(productImage.type)) {
-      showError(error, "La fotografía debe estar en formato JPG o PNG.");
+    if (productImage && !["image/jpeg", "image/png", "image/webp"].includes(productImage.type)) {
+      showError(error, "La fotografía debe estar en formato JPG, PNG o WEBP.");
       return;
     }
 
