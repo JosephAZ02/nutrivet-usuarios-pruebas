@@ -30,12 +30,12 @@ export default function NewSalePage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
   const [amountReceived, setAmountReceived] = useState("");
   const [saving, setSaving] = useState(false);
-  const [invoice, setInvoice] = useState<InvoiceResponse | null>(null); 
+  const [invoice, setInvoice] = useState<InvoiceResponse | null>(null);
   const [clients, setClients] = useState<Client[]>([]); // clientes para las ventas a crédito
   const [showCredit, setShowCredit] = useState(false); // ventana del crédito abierta
   const [showClientForm, setShowClientForm] = useState(false); // ventana de nuevo cliente abierta
@@ -337,7 +337,7 @@ export default function NewSalePage() {
             </div>
             <small className="text-muted">{cart.length === 1 ? "1 producto" : `${cart.length} productos`}</small>
 
-            <div className="mt-2">
+            <div className="mt-2" style={{ maxHeight: "320px", overflowY: "auto" }}>
               {cart.length === 0 ? (
                 <p className="text-muted py-4 text-center">Agrega productos para iniciar la venta.</p>
               ) : (
