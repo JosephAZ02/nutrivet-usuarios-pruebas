@@ -1,121 +1,103 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthService } from "../services/AuthService";
-import Button from "../components/atoms/Button";
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AuthService } from '../services/AuthService';
+import { showError } from '../utils/alerts';
+import { showSuccess } from '../utils/alerts';
 
 export default function ForgotPasswordPage() {
-
-    const [username, setUsername] = useState("");
-    const [masterKey, setMasterKey] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [message, setMessage] = useState({ type: "", text: "" });
+    const [step, setStep] = useState(1); 
+    const [email, setEmail] = useState('');
+    const [token, setToken] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [message, setMessage] = useState({ type: '', text: '' });
     const [loading, setLoading] = useState(false);
-
     const navigate = useNavigate();
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setMessage({ type: "", text: "" });
+    const handleRequestCode = async (e: React.FormEvent) => {
+        e.preventDefault();
         setLoading(true);
-
+        setMessage({ type: '', text: '' });
         try {
-            const responseMessage = await AuthService.recoverPassword({
-                username,
-                masterKey,
-                newPassword
-            });
-
-            setMessage({ type: "success", text: responseMessage });
-
-            setTimeout(() => navigate("/login"), 2000);
-
+            await AuthService.forgotPassword(email);
+            setMessage({ type: 'success', text: 'Si el correo está registrado, recibirás un código. Revisa la consola del servidor (Backend).' });
+            setStep(2);
         } catch (err: any) {
-            const errorMsg = err.response?.data ||
-                "Error al intentar recuperar la contraseña";
+            setMessage({ type: 'danger', text: 'Error al procesar la solicitud.' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            setMessage({ type: "danger", text: errorMsg });
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage({ type: '', text: '' });
+        try {
+            if (newPassword !== confirmPassword) {
+                showError({ type: 'danger', text: 'Las contraseñas no coinciden.' }, 'Las contraseñas deben coincidir.');
+                return;
+            }
+            await AuthService.resetPassword(token, newPassword);
+            showSuccess('Éxito', 'Contraseña cambiada correctamente. Redirigiendo al login...');
+            setTimeout(() => navigate('/login'), 2000);
+        } catch (err: any) {
+            showError({ type: 'danger', text: err.response?.data || 'Código inválido o expirado.' }, 'Error al restablecer la contraseña.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="container d-flex justify-content-center align-items-center min-vh-100">
-            <div className="card shadow-sm p-4 w-100" style={{ maxWidth: "420px" }}>
+        <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+            <div className="card shadow-sm p-4" style={{ width: '100%', maxWidth: '400px' }}>
+                <h4 className="text-center mb-4">Recuperar Contraseña</h4>
 
-                <h3 className="text-center mb-2">Cambiar contraseña</h3>
-                <p className="text-muted text-center mb-4">
-                    Ingresa tus datos para restablecer tu contraseña.
-                </p>
+                {message.text && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
-                {message.text && (
-                    <div className={`alert alert-${message.type} text-center py-2`}>
-                        {message.text}
-                    </div>
+                {step === 1 ? (
+                    <form onSubmit={handleRequestCode}>
+                        <div className="mb-3">
+                            <label className="form-label-bold">Correo Electrónico</label>
+                            <input type="email" className="form-control" required
+                                value={email} onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Ingresa tu correo registrado"
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+                            {loading ? 'Enviando...' : 'Enviar Código'}
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleResetPassword}>
+                        <div className="mb-3">
+                            <label className="form-label-bold">Código de Recuperación</label>
+                            <input type="text" className="form-control" required
+                                value={token} onChange={(e) => setToken(e.target.value)}
+                                placeholder="Pega el código de la consola"
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="form-label-bold">Nueva Contraseña</label>
+                            <input type="password" className="form-control" required
+                                value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label className="form-label-bold">Confirmar Contraseña</label>
+                            <input type="password" className="form-control" required
+                                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                        </div>
+                        <button type="submit" className="btn btn-success w-100" disabled={loading}>
+                            {loading ? 'Guardando...' : 'Cambiar Contraseña'}
+                        </button>
+                    </form>
                 )}
 
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <label className="form-label" style={{ fontWeight: 'bold', color: '#000000' }}>
-                            Usuario
-                        </label>
-                        <input
-                            className="form-control"
-                            type="text"
-                            placeholder="Ingresa tu usuario"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label" style={{ fontWeight: 'bold', color: '#000000' }}>
-                            Nueva contraseña
-                        </label>
-                        <input
-                            className="form-control"
-                            type="password"
-                            placeholder="Ingresa tu nueva contraseña"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="form-label" style={{ fontWeight: 'bold', color: '#000000' }}>
-                            Clave de recuperación
-                        </label>
-                        <input
-                            className="form-control"
-                            type="password"
-                            placeholder="Ingresa la clave"
-                            value={masterKey}
-                            onChange={(e) => setMasterKey(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    <div className="d-flex gap-2">
-                        <Button
-                            type="submit"
-                            className="btn btn-success flex-grow-1"
-                            disabled={loading}
-                        >
-                            {loading ? "Procesando..." : "Cambiar contraseña"}
-                        </Button>
-
-                        <Button
-                            type="button"
-                            className="btn btn-outline-danger flex-grow-1"
-                            onClick={() => navigate("/login")}
-                        >
-                            Cancelar
-                        </Button>
-                    </div>
-                </form>
+                <div className="text-center mt-3">
+                    <Link to="/login" className="btn btn-outline-danger">Cancelar</Link>
+                </div>
             </div>
         </div>
     );

@@ -1,12 +1,14 @@
-package com.nutrivet.backend.domain;
+package com.nutrivet.backend.dto;
 
-public class RegisterRequest {
+public class RegisterUserRequest {
     private String username;
     private String password;
     private String name;
+    private String email;
     private int roleId;
 
-    // Getters y Setters
+
+    
     public String getUsername() {
         return username;
     }
@@ -37,5 +39,13 @@ public class RegisterRequest {
 
     public void setRoleId(int roleId) {
         this.roleId = roleId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

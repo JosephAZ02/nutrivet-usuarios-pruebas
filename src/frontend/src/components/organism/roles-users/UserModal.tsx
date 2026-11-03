@@ -51,6 +51,14 @@ export default function UserModal({
                                 {isEditing && <small className="text-muted">Déjala en blanco si no deseas cambiarla.</small>}
                             </div>
                             <div className="mb-3">
+                                <label className="form-label-bold">Correo Electrónico</label>
+                                <input type="email" className="form-control" required
+                                    value={formData.email || ''}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    placeholder="correo@ejemplo.com"
+                                />
+                            </div>
+                            <div className="mb-3">
                                 <label className="form-label-bold">Rol</label>
                                 <select className="form-select" required
                                     value={formData.roleId} onChange={(e) => setFormData({ ...formData, roleId: Number(e.target.value) })}>

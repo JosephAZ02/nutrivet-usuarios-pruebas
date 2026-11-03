@@ -4,6 +4,7 @@ public class UpdateUserRequest {
     private String username;
     private String password; 
     private String name;
+    private String email;
     private int roleId;
 
     
@@ -37,5 +38,13 @@ public class UpdateUserRequest {
 
     public void setRoleId(int roleId) {
         this.roleId = roleId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

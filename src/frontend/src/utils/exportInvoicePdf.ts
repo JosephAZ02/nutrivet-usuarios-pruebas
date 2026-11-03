@@ -31,7 +31,7 @@ export function exportInvoicePdf(invoice: InvoiceResponse): void {
   doc.text(`Factura N° ${invoice.number}`, 14, 44);
   doc.text(clean(new Date(invoice.date).toLocaleString("es-CR")), 196, 44, { align: "right" });
 
-   // tabla de productos
+  // tabla de productos
   autoTable(doc, {
     head: [[
       "Código",
@@ -65,10 +65,19 @@ export function exportInvoicePdf(invoice: InvoiceResponse): void {
   addLine("IVA", money(invoice.tax));
   addLine("Total", money(invoice.total), true);
   y = y + 4;
-    addLine("Método de pago", paymentLabel(invoice.paymentMethod));
+  addLine("Método de pago", paymentLabel(invoice.paymentMethod));
   if (invoice.paymentMethod === "EFECTIVO") {
     addLine("Monto recibido", money(invoice.amountReceived));
     addLine("Vuelto", money(invoice.change));
+  }
+  if (invoice.credit) {
+    const dueDate = invoice.dueDate === null ? "" : invoice.dueDate.split("-").reverse().join("/"); // 2027-03-01 -> 01/03/2027
+    addLine("Cliente", String(invoice.clientName));
+    addLine("Cédula", String(invoice.clientId));
+    addLine("Abono inicial", money(invoice.amountReceived));
+    addLine("Saldo pendiente", money(invoice.balance), true);
+    addLine("Abono mensual", money(invoice.monthlyInstallment));
+    addLine("Fecha límite", dueDate);
   }
 
   // leyenda final

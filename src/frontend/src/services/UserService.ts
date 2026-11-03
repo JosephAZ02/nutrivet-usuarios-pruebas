@@ -7,6 +7,7 @@ export interface UserResponse {
     id: number;
     name: string;
     username: string;
+    email: string;
     idRole: number;
 }
 

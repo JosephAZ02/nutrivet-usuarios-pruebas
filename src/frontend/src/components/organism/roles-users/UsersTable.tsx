@@ -16,6 +16,7 @@ export default function UsersTable({ users, getRoleName, onEdit, onDelete }: Pro
                     <tr>
                         <th>Nombre Completo</th>
                         <th>Username</th>
+                        <th>Correo Electrónico</th>
                         <th>Rol</th>
                         <th className="text-end">Acciones</th>
                     </tr>
@@ -25,6 +26,7 @@ export default function UsersTable({ users, getRoleName, onEdit, onDelete }: Pro
                         <tr key={user.id}>
                             <td><strong>{user.name}</strong></td>
                             <td>{user.username}</td>
+                            <td>{user.email}</td>
                             <td><span className="badge bg-secondary">{getRoleName(user.idRole)}</span></td>
                             <td className="text-end">
                                 

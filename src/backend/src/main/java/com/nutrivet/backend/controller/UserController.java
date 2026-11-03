@@ -7,8 +7,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.nutrivet.backend.domain.User;
+import com.nutrivet.backend.dto.RegisterUserRequest;
 import com.nutrivet.backend.dto.UpdateUserRequest;
-import com.nutrivet.backend.domain.RegisterRequest;
 import com.nutrivet.backend.service.UserService;
 
 @RestController
@@ -38,12 +38,13 @@ public class UserController {
 
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('USER_CREATE')")
-    public ResponseEntity<?> addUser(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> addUser(@RequestBody RegisterUserRequest request) {
         try {
             User user = new User();
             user.setUsername(request.getUsername());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setName(request.getName());
+            user.setEmail(request.getEmail());
             user.setIdRole(request.getRoleId());
 
             userService.add(user);
@@ -65,6 +66,7 @@ public class UserController {
 
             user.setName(request.getName());
             user.setUsername(request.getUsername());
+            user.setEmail(request.getEmail());
             user.setIdRole(request.getRoleId());
 
             if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
