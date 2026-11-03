@@ -2,11 +2,10 @@ import type { InvoiceResponse } from "../interfaces/Sale";
 import { BUSINESS } from "./invoiceBusinessInfo";
 import { paymentLabel } from "./paymentLabel";
 
-// caracteres por línea del ticket de 80 mm (si sobra espacio a la derecha, probar con 48)
-const WIDTH = 42;
+// caracteres por línea del ticket de 80 mm
+const WIDTH = 48;
 
-// las impresoras de tickets suelen leer mal las tildes y el símbolo ₡:
-// se quitan las tildes (á -> a, ñ -> n) y se dejan solo caracteres simples
+
 function toAscii(text: string): string {
     return text
         .normalize("NFD")
@@ -16,12 +15,12 @@ function toAscii(text: string): string {
         .replace(/[^\x20-\x7E]/g, "?");
 }
 
-// monto en colones sin el símbolo ₡: 36500 -> CRC 36 500
+
 function money(amount: number): string {
     return "CRC " + toAscii(new Intl.NumberFormat("es-CR", { maximumFractionDigits: 2 }).format(amount));
 }
 
-// parte un texto largo en varias líneas sin cortar palabras
+
 function wrap(text: string): string[] {
     const lines: string[] = [];
     let current = "";

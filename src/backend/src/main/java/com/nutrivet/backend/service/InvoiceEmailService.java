@@ -1,8 +1,9 @@
 package com.nutrivet.backend.service;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,16 +61,12 @@ public class InvoiceEmailService {
             try (Folder inbox = store.getFolder("INBOX")) {// abrir la carpeta de entrada del correo
                 inbox.open(Folder.READ_WRITE);
 
-                Calendar calendar = Calendar.getInstance();// obtener la fecha y hora actual
-                calendar.set(Calendar.HOUR_OF_DAY, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
-                calendar.set(Calendar.MILLISECOND, 0);
-
-                // definir el limite inferior y superios de la fecha
-                Date startOfToday = calendar.getTime();
-                calendar.add(Calendar.DAY_OF_MONTH, 1);
-                Date startOfTomorrow = calendar.getTime();
+                ZoneId costaRicaZone = ZoneId.of("America/Costa_Rica");
+                ZonedDateTime nowInCostaRica = ZonedDateTime.now(costaRicaZone);
+                Date startOfToday = Date.from(
+                        nowInCostaRica.toLocalDate().atStartOfDay(costaRicaZone).toInstant());
+                Date startOfTomorrow = Date.from(
+                        nowInCostaRica.toLocalDate().plusDays(1).atStartOfDay(costaRicaZone).toInstant());
 
                 // Busca solo correos no leido recibidos durante el día actual
                 FlagTerm unreadMessages = new FlagTerm(

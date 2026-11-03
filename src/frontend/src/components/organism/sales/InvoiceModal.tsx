@@ -1,4 +1,5 @@
 import type { InvoiceResponse } from "../../../interfaces/Sale";
+import { printReceipt } from "../../../services/PrintService";
 import { exportInvoicePdf } from "../../../utils/exportInvoicePdf";
 import Button from "../../atoms/Button";
 import InvoiceView from "./InvoiceView";
@@ -12,11 +13,25 @@ interface InvoiceModalProps {
 
 function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
 
-    // imprime el formato de ticket de 80 mm; al terminar vuelve al formato normal
-    function printTicket() {
-        document.body.classList.add("print-ticket");
-        window.addEventListener("afterprint", () => document.body.classList.remove("print-ticket"), { once: true });
-        window.print();
+    async function handlePrintReceipt() {
+        try {
+            await printReceipt({
+                invoiceNumber: invoice.number,
+                date: new Date(invoice.date).toLocaleString("es-CR"),
+                items: invoice.items.map((line) => ({
+                    name: line.productName,
+                    quantity: line.quantity,
+                    price: line.unitPrice,
+                })),
+                subtotal: invoice.subtotal,
+                tax: invoice.tax,
+                total: invoice.total,
+                payment: invoice.amountReceived,
+            });
+        } catch (error) {
+            console.error("Error con QZ Tray", error);
+            alert("No se pudo imprimir. Verifique que QZ Tray esté abierto.");
+        }
     }
 
     return (
@@ -35,11 +50,11 @@ function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
                     </div>
 
                     <div className="modal-footer">
-                        <Button variant="outline" onClick={() => window.print()}>
+                        <Button variant="outline" onClick={handlePrintReceipt}>
                             <i className="bi bi-printer me-2" aria-hidden="true"></i>
                             Imprimir factura
                         </Button>
-                        <Button variant="outline" onClick={printTicket}>
+                        <Button variant="outline" onClick={handlePrintReceipt}>
                             <i className="bi bi-receipt me-2" aria-hidden="true"></i>
                             Imprimir ticket
                         </Button>

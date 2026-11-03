@@ -16,17 +16,19 @@ public class ReceivableAccount {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 
-	private double totalAmount; 
-	private double currentAmount; 
+	private double totalAmount;
+	private double currentAmount;
 
-	private double monthlyInstallment; 
-	private LocalDate dueDate; 
+	private double monthlyInstallment;
+	private LocalDate dueDate;
 
 	@Column(name = "invoice_id")
 	private int idInvoice;
 
 	@Column(name = "client_id", length = 12)
-	private String idClient; 
+	private String idClient;
+
+	private double initialPayment;
 
 	public int getId() {
 		return id;
@@ -82,5 +84,13 @@ public class ReceivableAccount {
 
 	public void setIdClient(String idClient) {
 		this.idClient = idClient;
+	}
+
+	public double getInitialPayment() {
+		return initialPayment;
+	}
+
+	public void setInitialPayment(double initialPayment) {
+		this.initialPayment = initialPayment;
 	}
 }

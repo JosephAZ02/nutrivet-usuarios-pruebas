@@ -1,6 +1,6 @@
 export default interface Client {
-  id: number;
+  id: string; 
   name: string;
   phone: string;
-  email: string;
+  email: string | null;
 }
