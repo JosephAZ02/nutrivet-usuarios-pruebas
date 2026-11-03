@@ -53,11 +53,21 @@ function SideBar() {
                 <li>
 
                     <Button className={activeItem === "cuentas-por-pagar" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/accounts-payable"); setActiveItem("cuentas-por-pagar"); }} >
-                        <i className="bi bi-person me-2" aria-hidden="true"></i>
+                        <i className="bi bi-wallet me-2" aria-hidden="true"></i>
                         Cuentas por pagar
                     </Button>
 
                 </li>
+
+                <li>
+                    {hasPermission("RECEIVABLE_ACCOUNT_GET_ALL") && (
+                        <Button className={activeItem === "cuentas-por-cobrar" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/accounts-receivable"); setActiveItem("cuentas-por-cobrar"); }} >
+                            <i className="bi bi-credit-card me-2" aria-hidden="true"></i>
+                            Cuentas por cobrar
+                        </Button>
+                    )}
+                </li>
+
                 <li>
                     {hasPermission("USER_CREATE") && (
                         <Button className={activeItem === "roles-usuarios" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/roles-users"); setActiveItem("roles-usuarios"); }} >
@@ -69,17 +79,11 @@ function SideBar() {
             </ul>
 
             <hr />
-            <div className="dropdown">
-                <a href="#" className="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="https://github.com/mdo.png" alt="" width="32" height="32" className="rounded-circle me-2" />
-                    <strong>mdo</strong>
-                </a>
-                <ul className="dropdown-menu dropdown-menu-dark text-small shadow ">
-
-                    <li><Button className="dropdown-item" onClick={logout}>
-                        Cerrar sesión
-                    </Button></li>
-                </ul>
+            <div className="align-items-center text-center ">
+                <Button className="dropdown-item" onClick={logout}>
+                    <i className="bi bi-box-arrow-right me-2" aria-hidden="true" ></i>
+                    Cerrar sesión
+                </Button>
             </div>
         </div>
     );

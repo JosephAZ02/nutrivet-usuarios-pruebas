@@ -12,3 +12,9 @@ export async function getInvoiceDetail(id: number): Promise<InvoiceResponse> {
   const response = await api.get<InvoiceResponse>(`/invoice/detail/${id}`);
   return response.data;
 }
+
+
+export async function getAllInvoices(): Promise<InvoiceResponse[]> {
+  const response = await api.get<InvoiceResponse[]>("/invoice/all");
+  return response.data;
+}

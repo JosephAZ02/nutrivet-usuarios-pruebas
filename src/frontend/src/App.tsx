@@ -7,6 +7,7 @@ import ProductsPage from './pages/ProductsPage';
 import InventoryPage from './pages/InventoryPage';
 import NewSalePage from './pages/NewSalePage';
 import RolesUsersPage from './pages/RolesUsersPage';
+import ReceivableAccountsPage from './pages/ReceivableAccountsPage';
 
 
 import RouteProtection from './components/organism/RouteProtection';
@@ -32,6 +33,9 @@ function App() {
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/new-sale" element={<NewSalePage />} />
             <Route path="/accounts-payable" element={<AccountsPayablePage />} />
+            <Route element={<RoutePermission requiredPermission="RECEIVABLE_ACCOUNT_GET_ALL" />}>
+              <Route path="/accounts-receivable" element={<ReceivableAccountsPage />} />
+            </Route>
             <Route element={<RoutePermission requiredPermission="USER_CREATE" />}>
               <Route path="/roles-users" element={<RolesUsersPage />} />
             </Route>

@@ -1,7 +1,16 @@
+
+export type AccountStatus = "PENDIENTE" | "VENCIDA" | "PAGADA";
+
 export default interface ReceivableAccount {
   id: number;
-  totalAmount: number;
-  currentAmount: number;
-  idInvoice: number;
-  idClient: number;
+  invoiceId: number;
+  invoiceNumber: string;
+  clientId: string; 
+  clientName: string;
+  totalAmount: number; 
+  paidAmount: number; 
+  balance: number; 
+  monthlyInstallment: number; 
+  dueDate: string | null; 
+  status: AccountStatus;
 }

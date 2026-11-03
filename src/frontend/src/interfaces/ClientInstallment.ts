@@ -1,7 +1,8 @@
+
 export default interface ClientInstallment {
   id: number;
   amount: number;
-  installmentDate: string;
+  installmentDate: string; 
   idReceivableAccount: number;
-  idClient: number;
+  idClient: string; 
 }
