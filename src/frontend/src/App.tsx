@@ -34,7 +34,7 @@ function App() {
             <Route path="/new-sale" element={<NewSalePage />} />
             <Route path="/accounts-payable" element={<AccountsPayablePage />} />
             <Route element={<RoutePermission requiredPermission="RECEIVABLE_ACCOUNT_GET_ALL" />}>
-              <Route path="/receivable-accounts" element={<ReceivableAccountsPage />} />
+              <Route path="/accounts-receivable" element={<ReceivableAccountsPage />} />
             </Route>
             <Route element={<RoutePermission requiredPermission="USER_CREATE" />}>
               <Route path="/roles-users" element={<RolesUsersPage />} />

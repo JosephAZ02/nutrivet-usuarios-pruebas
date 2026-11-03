@@ -58,14 +58,14 @@ function SideBar() {
                     </Button>
 
                 </li>
-                
+
                 <li>
-
-                    <Button className={activeItem === "cuentas-por-cobrar" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/accounts-receivable"); setActiveItem("cuentas-por-cobrar"); }} >
-                        <i className="bi bi-credit-card me-2" aria-hidden="true"></i>
-                        Cuentas por cobrar
-                    </Button>
-
+                    {hasPermission("RECEIVABLE_ACCOUNT_GET_ALL") && (
+                        <Button className={activeItem === "cuentas-por-cobrar" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/accounts-receivable"); setActiveItem("cuentas-por-cobrar"); }} >
+                            <i className="bi bi-credit-card me-2" aria-hidden="true"></i>
+                            Cuentas por cobrar
+                        </Button>
+                    )}
                 </li>
 
                 <li>
