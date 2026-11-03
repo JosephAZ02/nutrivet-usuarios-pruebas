@@ -1,6 +1,8 @@
 import { useState } from "react";
+import api from "../../services/Api";
 
-const IMAGE_URL = "http://localhost:8080/uploads/"; //ruta donde el backend sirve las fotos
+// ruta donde el backend sirve las fotos: la misma dirección del API, sin el /api del final
+const IMAGE_URL = `${api.defaults.baseURL?.replace(/\/api\/?$/, "")}/uploads/`;
 
 interface ProductImageProps {
     photo: string | null; //ruta de la foto guardada en el producto (ej: products/abc.png)
