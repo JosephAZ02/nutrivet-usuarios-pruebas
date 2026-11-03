@@ -22,6 +22,11 @@ public class ReceivableAccountService {
         return receivableAccountRepository.findById(id);
     }
 
+        
+    public Optional<ReceivableAccount> getByInvoiceId(int idInvoice) {
+        return receivableAccountRepository.findByIdInvoice(idInvoice);
+    }
+
     public ReceivableAccount add(ReceivableAccount receivableAccount) {
         return receivableAccountRepository.save(receivableAccount);
     }
