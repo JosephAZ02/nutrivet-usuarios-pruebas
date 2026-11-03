@@ -13,7 +13,6 @@ interface ModalReviewSupplierInvoiceProps {
     onReject: () => void;
 }
 
-const periods = [7, 15, 30, 60, 90];
 
 const formatDate = (date: string) =>
     new Date(`${date}T00:00:00`).toLocaleDateString("es-CR", {
@@ -124,19 +123,10 @@ export function ModalReviewSupplierInvoice({
                         {condition === "CREDIT" && (
                             <>
                                 <label htmlFor="invoice-period" className="form-label fw-semibold">Plazo indicado en la factura</label>
-                                <select
-                                    id="invoice-period"
-                                    className="form-select mb-3"
-                                    value={period}
-                                    onChange={(event) => {
-                                        setPeriod(event.target.value);
-                                        setDueDate("");
-                                    }}
-                                    disabled={saving}
-                                >
-                                    {periods.map((value) => <option key={value} value={value}>{value} días</option>)}
-                                    <option value="custom">Ingresar fecha manualmente</option>
-                                </select>
+
+                                <div>{invoice.period} días</div>
+
+
                                 {period === "custom" && (
                                     <input
                                         type="date"

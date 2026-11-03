@@ -101,7 +101,18 @@ function ReportResults({ headers, rows, title, loading = false, invoiceIds, onPa
                                                 : cell}
                                         </td>
                                     ))}
-                                    {title === "Cuentas por pagar" && row[headers.indexOf("Condición")] === "Contado" ? (
+                                    {title === "Cuentas por pagar" && row[headers.indexOf("Estado")] === "Cancelada" ? (
+                                        <td className="text-start text-nowrap">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="btn-sm px-3 py-1 border-danger text-danger"
+                                                onClick={() => onRemove?.(invoiceIds?.[rowIndex] ?? 0)}
+                                            >
+                                                Quitar
+                                            </Button>
+                                        </td>
+                                    ) : title === "Cuentas por pagar" && row[headers.indexOf("Condición")] === "Contado" ? (
                                         <td className="text-start text-nowrap">
                                             <Button
                                                 type="button"
