@@ -337,7 +337,7 @@ export default function NewSalePage() {
             </div>
             <small className="text-muted">{cart.length === 1 ? "1 producto" : `${cart.length} productos`}</small>
 
-            <div className="mt-2" style={{ maxHeight: "320px", overflowY: "auto" }}>
+            <div className="mt-2 pe-2" style={{ maxHeight: "320px", overflowY: "auto" }}>
               {cart.length === 0 ? (
                 <p className="text-muted py-4 text-center">Agrega productos para iniciar la venta.</p>
               ) : (
