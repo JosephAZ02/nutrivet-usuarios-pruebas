@@ -172,7 +172,7 @@ function ProductModal({ editingProduct, productForm, setProductForm, setProductI
                                     type="file"
                                     style={{ borderColor: '#000' }}
                                     className="form-control"
-                                    accept="image/png, image/jpeg"
+                                    accept="image/png, image/jpeg, image/webp"
                                     onChange={(e) => setProductImage(e.target.files?.[0] ?? null)}
                                 />
                             </div>
