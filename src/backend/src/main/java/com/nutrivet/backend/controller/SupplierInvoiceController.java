@@ -102,16 +102,13 @@ public class SupplierInvoiceController {
     }
 
     @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasAuthority('SUPPLIER_INVOICE_DELETE')")
+    @PreAuthorize("hasAuthority('SUPPLIER_INVOICE_CREATE')")
     public void deleteSupplierInvoice(@PathVariable int id) {
         SupplierInvoice supplierInvoice = supplierInvoiceService.getById(id).orElse(null);
         if (supplierInvoice == null) {
             throw new IllegalArgumentException("Factura no encontrada.");
         }
-        if (supplierInvoice.getState().equals("PAID")) {
-            throw new IllegalArgumentException("No se puede eliminar una factura que ya ha sido pagada o cancelada.");
 
-        }
         supplierInvoiceService.deleteById(id);
 
     }

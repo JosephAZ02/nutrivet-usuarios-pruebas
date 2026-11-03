@@ -5,18 +5,21 @@ import Input from "../../atoms/Input";
 import Label from "../../atoms/Label";
 
 interface ClientFormModalProps {
+    client?: Client; 
     saving: boolean; 
     onSave: (client: Client) => void; 
     onClose: () => void; 
 }
 
-function ClientFormModal({ saving, onSave, onClose }: ClientFormModalProps) {
-    const [id, setId] = useState("");
-    const [name, setName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
+function ClientFormModal({ client, saving, onSave, onClose }: ClientFormModalProps) {
+    const isEditing = client !== undefined;
 
-    // el botón se activa cuando están los datos obligatorios (el backend revisa el formato)
+    const [id, setId] = useState(client?.id ?? "");
+    const [name, setName] = useState(client?.name ?? "");
+    const [phone, setPhone] = useState(client?.phone ?? "");
+    const [email, setEmail] = useState(client?.email ?? "");
+
+    // el botón se activa cuando están los datos obligatorios
     const canSave = id.trim() !== "" && name.trim() !== "" && phone.trim() !== "";
 
     function handleSubmit(e: React.FormEvent) {
@@ -35,7 +38,7 @@ function ClientFormModal({ saving, onSave, onClose }: ClientFormModalProps) {
                 <div className="modal-content">
 
                     <div className="modal-header">
-                        <h5 className="modal-title">Nuevo cliente</h5>
+                        <h5 className="modal-title">{isEditing ? "Editar cliente" : "Nuevo cliente"}</h5>
                         <button type="button" className="btn-close" aria-label="Cerrar" onClick={onClose}></button>
                     </div>
 
@@ -43,16 +46,20 @@ function ClientFormModal({ saving, onSave, onClose }: ClientFormModalProps) {
                         <div className="modal-body">
                             <div className="mb-3">
                                 <Label text="Cédula" />
-                                <Input
-                                    placeholder="Solo números, sin guiones"
-                                    value={id}
-                                    onChange={(e) => setId(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                                    autoFocus
-                                />
+                                {isEditing ? (
+                                    <input type="text" className="form-control" value={id} disabled />
+                                ) : (
+                                    <Input
+                                        placeholder="Solo números, sin guiones"
+                                        value={id}
+                                        onChange={(e) => setId(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                                        autoFocus
+                                    />
+                                )}
                             </div>
                             <div className="mb-3">
                                 <Label text="Nombre completo" />
-                                <Input placeholder="Nombre del cliente" value={name} onChange={(e) => setName(e.target.value)} />
+                                <Input placeholder="Nombre del cliente" value={name} onChange={(e) => setName(e.target.value)} autoFocus={isEditing} />
                             </div>
                             <div className="mb-3">
                                 <Label text="Teléfono" />
@@ -69,7 +76,7 @@ function ClientFormModal({ saving, onSave, onClose }: ClientFormModalProps) {
                                 Cancelar
                             </Button>
                             <Button type="submit" variant="success" disabled={!canSave || saving}>
-                                {saving ? "Guardando..." : "Guardar cliente"}
+                                {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Guardar cliente"}
                             </Button>
                         </div>
                     </form>

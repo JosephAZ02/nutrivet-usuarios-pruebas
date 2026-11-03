@@ -119,11 +119,12 @@ export default function InventoryPage() {
   const totalExits = movements.filter((movement) => movement.type === "SALIDA").length;
 
   return (
-    <div className="container-fluid py-4">
+    <div className="container-fluid p-4">
       {/* encabezado */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 className="fw-bold mb-1">Inventario</h2>
+          <small className="text-success fw-semibold text-uppercase">Almacén</small>
+          <h1 className="h3 mb-1">Inventario</h1>
           <p className="text-muted mb-0">
             Historial de entradas y salidas de productos.
           </p>

@@ -8,6 +8,7 @@ import InventoryPage from './pages/InventoryPage';
 import NewSalePage from './pages/NewSalePage';
 import RolesUsersPage from './pages/RolesUsersPage';
 import ReceivableAccountsPage from './pages/ReceivableAccountsPage';
+import ClientsPage from './pages/ClientsPage';
 
 
 import RouteProtection from './components/organism/RouteProtection';
@@ -35,6 +36,9 @@ function App() {
             <Route path="/accounts-payable" element={<AccountsPayablePage />} />
             <Route element={<RoutePermission requiredPermission="RECEIVABLE_ACCOUNT_GET_ALL" />}>
               <Route path="/accounts-receivable" element={<ReceivableAccountsPage />} />
+            </Route>
+            <Route element={<RoutePermission requiredPermission="CLIENT_GET_ALL" />}>
+              <Route path="/clients" element={<ClientsPage />} />
             </Route>
             <Route element={<RoutePermission requiredPermission="USER_CREATE" />}>
               <Route path="/roles-users" element={<RolesUsersPage />} />
