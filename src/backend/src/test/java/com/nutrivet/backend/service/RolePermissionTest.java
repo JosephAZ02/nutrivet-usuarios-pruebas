@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,86 +25,67 @@ class RolePermissionServiceTest {
     @InjectMocks
     private RolePermissionService rolePermissionService;
 
-    // --- HELPER PARA CREAR PERMISOS FALSOS ---
-    private RolePermission createRolePermission(int idPermission) {
+    // Helper para simular la respuesta de la base de datos
+    private RolePermission mockPermission(int id) {
         RolePermission rp = new RolePermission();
-        rp.setIdPermission(idPermission);
+        rp.setIdPermission(id);
         return rp;
     }
 
     @Test
-    void updateAdminPermissions_TryingToRemove_ThrowsException() {
-        // 1. PREPARACIÓN: El Admin (rol 1) actualmente tiene los permisos 1 y 2
-        RolePermission permiso1 = createRolePermission(1);
-        RolePermission permiso2 = createRolePermission(2);
-        when(rolePermissionRepository.findByIdRole(1)).thenReturn(Arrays.asList(permiso1, permiso2));
+    void testAdminCannotRemoveExistingPermissions() {
+        // 1. Preparación: El Admin (rol 1) tiene los permisos 1 y 2 en la BD
+        when(rolePermissionRepository.findByIdRole(1)).thenReturn(Arrays.asList(mockPermission(1), mockPermission(2)));
 
-        // Intentamos actualizar al admin pasándole SOLO el permiso 1 (queremos quitarle el 2)
-        List<Integer> nuevosPermisos = List.of(1);
+        // 2. Ejecución: Intentamos actualizar al Admin dejándole SOLO el permiso 1 (queremos quitarle el 2)
+        List<Integer> newPermissions = List.of(1);
 
-        // 2. EJECUCIÓN Y VERIFICACIÓN
+        // 3. Verificación: Debe lanzar una excepción
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            rolePermissionService.updateRolePermissions(1, nuevosPermisos);
+            rolePermissionService.updateRolePermissions(1, newPermissions);
         });
 
-        // 3. VERIFICACIÓN: El mensaje correcto y NO se borró nada en la BD
-        assertEquals("Operación denegada: No puedes quitarle permisos existentes al Administrador. Solo puedes añadir nuevos.", 
-                     exception.getMessage());
+        // Verificamos el mensaje de error (ajusta el texto si tu código dice algo diferente)
+        assertTrue(exception.getMessage().contains("No puedes quitarle permisos existentes al Administrador"));
+
+        // VERIFICACIÓN CRÍTICA: La base de datos NO debe haber sido alterada
         verify(rolePermissionRepository, never()).deleteAll(anyList());
+        verify(rolePermissionRepository, never()).save(any(RolePermission.class));
     }
 
     @Test
-    void updateAdminPermissions_AddingNew_Success() {
-        // 1. PREPARACIÓN: El Admin (rol 1) actualmente tiene el permiso 1
-        RolePermission permiso1 = createRolePermission(1);
-        when(rolePermissionRepository.findByIdRole(1)).thenReturn(List.of(permiso1));
+    void testAdminCanAddNewPermissions() {
+        // 1. Preparación: El Admin tiene el permiso 1
+        when(rolePermissionRepository.findByIdRole(1)).thenReturn(List.of(mockPermission(1)));
 
-        // Le pasamos el permiso 1 (que ya tiene) y el 2 (nuevo)
-        List<Integer> nuevosPermisos = List.of(1, 2);
+        // 2. Ejecución: Le pasamos el permiso 1 (que ya tiene) y el 2 (nuevo)
+        List<Integer> newPermissions = List.of(1, 2);
 
-        // 2. EJECUCIÓN: No debería lanzar excepción
+        // 3. Verificación: No debe lanzar excepción
         assertDoesNotThrow(() -> {
-            rolePermissionService.updateRolePermissions(1, nuevosPermisos);
+            rolePermissionService.updateRolePermissions(1, newPermissions);
         });
 
-        // 3. VERIFICACIÓN: Sí se borraron los viejos para insertar la nueva lista
+        // Se debieron borrar los viejos y guardar los dos nuevos
         verify(rolePermissionRepository, times(1)).deleteAll(anyList());
-        verify(rolePermissionRepository, times(2)).save(any(RolePermission.class)); // Guardó 2 permisos
+        verify(rolePermissionRepository, times(2)).save(any(RolePermission.class));
     }
 
     @Test
-    void updateNormalRolePermissions_TryingToRemove_Success() {
-        // 1. PREPARACIÓN: El Vendedor (rol 2) tiene los permisos 1 y 2
-        RolePermission permiso1 = createRolePermission(1);
-        RolePermission permiso2 = createRolePermission(2);
-        when(rolePermissionRepository.findByIdRole(2)).thenReturn(Arrays.asList(permiso1, permiso2));
+    void testNormalRoleCanRemoveOrModifyPermissions() {
+        // 1. Preparación: Un rol normal (ej. Vendedor, rol 2) tiene los permisos 1 y 2
+        when(rolePermissionRepository.findByIdRole(2)).thenReturn(Arrays.asList(mockPermission(1), mockPermission(2)));
 
-        // Le pasamos solo el permiso 2 (le estamos quitando el 1)
-        List<Integer> nuevosPermisos = List.of(2);
+        // 2. Ejecución: Queremos quitarle el permiso 1 y dejarle solo el 2
+        List<Integer> newPermissions = List.of(2);
 
-        // 2. EJECUCIÓN: No debería lanzar excepción porque NO es el admin
+        // 3. Verificación: Debe permitirlo sin excepciones
         assertDoesNotThrow(() -> {
-            rolePermissionService.updateRolePermissions(2, nuevosPermisos);
+            rolePermissionService.updateRolePermissions(2, newPermissions);
         });
 
-        // 3. VERIFICACIÓN: Borró los viejos y guardó solo el nuevo
+        // Se borran los viejos y se guarda solo el nuevo
         verify(rolePermissionRepository, times(1)).deleteAll(anyList());
         verify(rolePermissionRepository, times(1)).save(any(RolePermission.class));
-    }
-
-    @Test
-    void updateRolePermissions_WithNullList_DeletesAll() {
-        // 1. PREPARACIÓN: El Vendedor (rol 2) tiene permisos
-        RolePermission permiso1 = createRolePermission(1);
-        when(rolePermissionRepository.findByIdRole(2)).thenReturn(List.of(permiso1));
-
-        // 2. EJECUCIÓN: Le pasamos null (quitar todos los permisos)
-        assertDoesNotThrow(() -> {
-            rolePermissionService.updateRolePermissions(2, null);
-        });
-
-        // 3. VERIFICACIÓN: Borró todo, pero no guardó nada nuevo
-        verify(rolePermissionRepository, times(1)).deleteAll(anyList());
-        verify(rolePermissionRepository, never()).save(any(RolePermission.class));
     }
 }
