@@ -4,12 +4,13 @@ import { formatCurrency } from "../../../utils/formatCurrency";
 import { paymentLabel } from "../../../utils/paymentLabel";
 
 interface InvoiceViewProps {
-    invoice: InvoiceResponse; 
+    invoice: InvoiceResponse; //factura que se muestra
 }
 
 function InvoiceView({ invoice }: InvoiceViewProps) {
     const date = new Date(invoice.date).toLocaleString("es-CR");
     const method = paymentLabel(invoice.paymentMethod);
+    const dueDate = invoice.dueDate === null ? "" : invoice.dueDate.split("-").reverse().join("/"); // 2027-03-01 -> 01/03/2027
 
     return (
         <div id="invoice-print">
@@ -31,7 +32,7 @@ function InvoiceView({ invoice }: InvoiceViewProps) {
                         <th>Código</th>
                         <th>Descripción</th>
                         <th className="text-end">Cant.</th>
-                        <th className="text-end">Precio unitario</th>
+                        <th className="text-end">Precio</th>
                         <th className="text-end">Total</th>
                     </tr>
                 </thead>
@@ -75,6 +76,34 @@ function InvoiceView({ invoice }: InvoiceViewProps) {
                         <div className="d-flex justify-content-between">
                             <span>Vuelto</span>
                             <span>{formatCurrency(invoice.change)}</span>
+                        </div>
+                    </>
+                )}
+                {invoice.credit && (
+                    <>
+                        <div className="d-flex justify-content-between">
+                            <span>Cliente</span>
+                            <span>{invoice.clientName}</span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                            <span>Cédula</span>
+                            <span>{invoice.clientId}</span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                            <span>Abono inicial</span>
+                            <span>{formatCurrency(invoice.amountReceived)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                            <strong>Saldo pendiente</strong>
+                            <strong>{formatCurrency(invoice.balance)}</strong>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                            <span>Abono mensual</span>
+                            <span>{formatCurrency(invoice.monthlyInstallment)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                            <span>Fecha límite</span>
+                            <span>{dueDate}</span>
                         </div>
                     </>
                 )}
