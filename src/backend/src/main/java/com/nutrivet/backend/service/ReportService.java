@@ -18,7 +18,6 @@ import com.nutrivet.backend.dto.CategorySalesDto;
 import com.nutrivet.backend.dto.TopProductDto;
 import com.nutrivet.backend.repository.InvoiceDetailRepository;
 import com.nutrivet.backend.repository.InvoiceRepository;
-import com.nutrivet.backend.repository.ProductCategoryRepository;
 import com.nutrivet.backend.repository.ProductRepository;
 
 @Service
@@ -30,8 +29,6 @@ public class ReportService {
     private InvoiceDetailRepository detailRepository;
     @Autowired
     private ProductRepository productRepository;
-    @Autowired
-    private ProductCategoryRepository categoryRepository;
 
     public List<com.nutrivet.backend.dto.MonthlyIncomeDto> monthlyIncome() {
         // cuánto se facturó en cada mes del año

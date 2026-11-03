@@ -47,7 +47,7 @@ public class InvoiceEmailService {
     public InvoiceEmailService() {
     }
 
-    @Scheduled(fixedDelay = 300000) // Ejecutar cada 5 minutos 300000 milisegundos 10 minutos 600000 y 30 minutos
+    @Scheduled(fixedDelay = 6000) //  Ejecutar cada 5 minutos 300000 milisegundos 10 minutos 600000 y 30 minutos
     // 1800000
     public void readEmails() {
         Properties properties = new Properties();
