@@ -52,6 +52,10 @@
     display: none;
 }
 
+/* hoja sin márgenes solo para el ticket */
+@page ticket {
+    margin: 0;
+}
 
 @media print {
     /* al imprimir ticket, se oculta la factura grande y se muestra el ticket */
@@ -66,6 +70,7 @@
 
     body.print-ticket #ticket-print {
         display: block;
+        page: ticket;
         position: absolute;
         left: 0;
         top: 0;

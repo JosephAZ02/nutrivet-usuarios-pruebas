@@ -4,7 +4,6 @@ import Button from "../../atoms/Button";
 import InvoiceView from "./InvoiceView";
 import InvoiceTicket from "./InvoiceTicket";
 import "./InvoiceModal.css";
-import { buildTicketText } from "../../../utils/ticketText";
 
 interface InvoiceModalProps {
     invoice: InvoiceResponse; //factura que se muestra
@@ -14,24 +13,10 @@ interface InvoiceModalProps {
 function InvoiceModal({ invoice, onClose }: InvoiceModalProps) {
 
     // imprime el formato de ticket de 80 mm; al terminar vuelve al formato normal
+        // imprime el formato de ticket de 80 mm; al terminar vuelve al formato normal
     function printTicket() {
-        // alto del papel según las líneas del ticket, para que no se gaste papel de más
-        const lines = buildTicketText(invoice).split("\n").length;
-        const heightMm = Math.ceil(lines * 3.3) + 10;
-
-        const pageStyle = document.createElement("style");
-        pageStyle.textContent = `@page { size: 80mm ${heightMm}mm; margin: 0; }`;
-        document.head.appendChild(pageStyle);
-
         document.body.classList.add("print-ticket");
-        window.addEventListener(
-            "afterprint",
-            () => {
-                document.body.classList.remove("print-ticket");
-                pageStyle.remove();
-            },
-            { once: true }
-        );
+        window.addEventListener("afterprint", () => document.body.classList.remove("print-ticket"), { once: true });
         window.print();
     }
 
