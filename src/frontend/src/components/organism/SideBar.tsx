@@ -45,6 +45,14 @@ function SideBar() {
                     </Button>
                 </li>
                 <li>
+                    {hasPermission("CLIENT_GET_ALL") && (
+                        <Button className={activeItem === "clientes" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/clients"); setActiveItem("clientes"); }} >
+                            <i className="bi bi-people me-2" aria-hidden="true"></i>
+                            Clientes
+                        </Button>
+                    )}
+                </li>
+                <li>
                     <Button className={activeItem === "reportes" ? "nav-link active" : "nav-link"} onClick={() => { navigate("/reports"); setActiveItem("reportes"); }} >
                         <i className="bi bi-file-earmark-bar-graph me-2" aria-hidden="true"></i>
                         Reportes
