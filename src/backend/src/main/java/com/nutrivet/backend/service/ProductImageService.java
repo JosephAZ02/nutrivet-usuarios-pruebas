@@ -41,8 +41,8 @@ public class ProductImageService {
 
         if (contentType == null ||
                 (!contentType.equalsIgnoreCase("image/jpeg") &&
-                 !contentType.equalsIgnoreCase("image/png"))) {
-            throw new RuntimeException("Solo se permiten imágenes JPG o PNG");
+                        !contentType.equalsIgnoreCase("image/png") && !contentType.equalsIgnoreCase("image/webp"))) {
+            throw new RuntimeException("Solo se permiten imágenes JPG, PNG o WEBP");
         }
 
         try {
