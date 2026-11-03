@@ -1,5 +1,5 @@
 
-import type { AuthResponse, LoginRequest, RecoverPasswordRequest } from '../interfaces/Auth';
+import type { AuthResponse, LoginRequest } from '../interfaces/Auth';
 import api from './Api';
 
 export const AuthService = {

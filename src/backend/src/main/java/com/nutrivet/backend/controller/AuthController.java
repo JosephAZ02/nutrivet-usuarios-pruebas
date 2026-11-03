@@ -25,28 +25,25 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Value("${application.security.master-key}")
-    private String masterRecoveringKey;
 
-    private final UserRepository userRepository;
+   
 
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
 
 
-    private final PasswordEncoder passwordEncoder;
     
     private final PasswordResetService passwordResetService;
 
 
     public AuthController(AuthenticationManager authenticationManager, UserDetailsService userDetailsService,
-            JwtService jwtService, UserRepository userRepository, PasswordResetService passwordService, PasswordEncoder passwordEncoder) {
+            JwtService jwtService , PasswordResetService passwordService ) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
-        this.userRepository = userRepository;
+       
         this.jwtService = jwtService;
-        this.passwordEncoder = passwordEncoder;
+        
         this.passwordResetService = passwordService;
     }
 
