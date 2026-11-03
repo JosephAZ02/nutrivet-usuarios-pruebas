@@ -1,18 +1,22 @@
 package com.nutrivet.backend.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,10 +28,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import com.nutrivet.backend.domain.Client;
+import com.nutrivet.backend.domain.ClientInstallment;
 import com.nutrivet.backend.domain.InventoryMovement;
 import com.nutrivet.backend.domain.Invoice;
 import com.nutrivet.backend.domain.InvoiceDetail;
 import com.nutrivet.backend.domain.Product;
+import com.nutrivet.backend.domain.ReceivableAccount;
 import com.nutrivet.backend.dto.InvoiceResponse;
 import com.nutrivet.backend.dto.SaleItemRequest;
 import com.nutrivet.backend.dto.SaleRequest;
@@ -36,8 +43,7 @@ import com.nutrivet.backend.dto.SaleRequest;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class SaleServiceTest {
 
-    // Los servicios de los que depende SaleService se reemplazan por versiones
-    // falsas
+    // Los servicios de los que depende SaleService se reemplazan por versiones falsas
     @Mock
     private InvoiceService invoiceService;
 
@@ -50,12 +56,23 @@ class SaleServiceTest {
     @Mock
     private ProductService productService;
 
+    @Mock
+    private ClientService clientService;
+
+    @Mock
+    private ReceivableAccountService receivableAccountService;
+
+    @Mock
+    private ClientInstallmentService clientInstallmentService;
+
     @InjectMocks
     private SaleService saleService;
 
     // "Base de datos" falsa: lo que la venta va guardando
     private Invoice savedInvoice;
     private List<InvoiceDetail> savedDetails;
+    private ReceivableAccount savedAccount;
+    private List<ClientInstallment> savedInstallments;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +94,24 @@ class SaleServiceTest {
             return detail;
         });
         when(invoiceDetailService.getByInvoiceId(7)).thenAnswer(call -> savedDetails);
+
+        savedAccount = null;
+        savedInstallments = new ArrayList<>();
+
+        // Al guardar la cuenta por cobrar se le asigna el id 5
+        when(receivableAccountService.add(any(ReceivableAccount.class))).thenAnswer(call -> {
+            ReceivableAccount account = call.getArgument(0);
+            account.setId(5);
+            savedAccount = account;
+            return account;
+        });
+        when(receivableAccountService.getByInvoiceId(7)).thenAnswer(call -> Optional.ofNullable(savedAccount));
+
+        when(clientInstallmentService.add(any(ClientInstallment.class))).thenAnswer(call -> {
+            ClientInstallment installment = call.getArgument(0);
+            savedInstallments.add(installment);
+            return installment;
+        });
     }
 
     // ---------- métodos auxiliares de las pruebas ----------
@@ -99,6 +134,18 @@ class SaleServiceTest {
 
     private SaleRequest cardSale(SaleItemRequest... items) {
         return new SaleRequest("TARJETA", null, List.of(items));
+    }
+
+    private void addClient(String id, String name) {
+        Client client = new Client();
+        client.setId(id);
+        client.setName(name);
+        when(clientService.getById(id)).thenReturn(Optional.of(client));
+    }
+
+    private SaleRequest creditSale(String clientId, Double initialPayment, Double monthlyInstallment,
+            LocalDate dueDate, SaleItemRequest... items) {
+        return new SaleRequest("CREDITO", null, List.of(items), clientId, initialPayment, monthlyInstallment, dueDate);
     }
 
     // Comprueba que la venta falle con exactamente ese mensaje
@@ -134,7 +181,7 @@ class SaleServiceTest {
         InvoiceResponse invoice = saleService.createSale(
                 cashSale(4000.0, new SaleItemRequest(1, 2), new SaleItemRequest(2, 3)));
 
-        // 1500.50 x 2 = 3001.00 y 250.25 x 3 = 750.75
+        // 1500.50 x 2 = 3001.00  y  250.25 x 3 = 750.75
         assertEquals(3751.75, invoice.total(), 0.001);
         assertEquals(248.25, invoice.change(), 0.001);
         assertEquals(2, invoice.items().size());
@@ -202,7 +249,7 @@ class SaleServiceTest {
         addProduct(1, "Producto A", 1000, 10);
         SaleRequest request = new SaleRequest("CHEQUE", 5000.0, List.of(new SaleItemRequest(1, 1)));
 
-        assertSaleFails(request, "Método de pago inválido: use EFECTIVO, TARJETA o SINPE");
+        assertSaleFails(request, "Método de pago inválido: use EFECTIVO, TARJETA, SINPE o CREDITO");
     }
 
     // ---------- inventario ----------
@@ -339,16 +386,14 @@ class SaleServiceTest {
     void cantidadCero_rechazaLaVenta() {
         addProduct(1, "Producto A", 1000, 10);
 
-        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, 0)),
-                "La cantidad de cada producto debe ser mayor a cero");
+        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, 0)), "La cantidad de cada producto debe ser mayor a cero");
     }
 
     @Test
     void cantidadNegativa_rechazaLaVenta() {
         addProduct(1, "Producto A", 1000, 10);
 
-        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, -2)),
-                "La cantidad de cada producto debe ser mayor a cero");
+        assertSaleFails(cashSale(9999.0, new SaleItemRequest(1, -2)), "La cantidad de cada producto debe ser mayor a cero");
     }
 
     @Test
@@ -364,38 +409,37 @@ class SaleServiceTest {
     }
 
     @Test
-    void masDeCienProductos_rechazaLaVenta() {
+    void masDeVeinteProductos_rechazaLaVenta() {
         addProduct(1, "Producto A", 1000, 1000);
         List<SaleItemRequest> items = new ArrayList<>();
-        for (int i = 0; i < 101; i++) {
+        for (int i = 0; i < 21; i++) {
             items.add(new SaleItemRequest(1, 1));
         }
 
-        assertSaleFails(new SaleRequest("EFECTIVO", 999999.0, items), "La factura no puede tener más de 100 productos");
+        assertSaleFails(new SaleRequest("EFECTIVO", 999999.0, items), "La factura no puede tener más de 20 productos");
 
         verify(invoiceService, never()).add(any(Invoice.class));
     }
 
     @Test
-    void exactamenteCienProductos_permiteLaVenta() {
+    void exactamenteVeinteProductos_permiteLaVenta() {
         addProduct(1, "Producto A", 10, 1000);
         List<SaleItemRequest> items = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 20; i++) {
             items.add(new SaleItemRequest(1, 1));
         }
 
         InvoiceResponse invoice = saleService.createSale(new SaleRequest("TARJETA", null, items));
 
-        assertEquals(1000.0, invoice.total(), 0.001);
-        assertEquals(100, invoice.items().size());
+        assertEquals(200.0, invoice.total(), 0.001);
+        assertEquals(20, invoice.items().size());
     }
 
     @Test
     void mismoProductoEnDosLineas_sumaLasCantidades() {
         addProduct(1, "Producto A", 1000, 10);
 
-        InvoiceResponse invoice = saleService
-                .createSale(cardSale(new SaleItemRequest(1, 2), new SaleItemRequest(1, 3)));
+        InvoiceResponse invoice = saleService.createSale(cardSale(new SaleItemRequest(1, 2), new SaleItemRequest(1, 3)));
 
         assertEquals(5000.0, invoice.total(), 0.001);
         assertEquals(2, invoice.items().size());
@@ -406,8 +450,7 @@ class SaleServiceTest {
     void mismoProductoEnDosLineas_sumadasSuperanLasExistencias_rechazaLaVenta() {
         Product product = addProduct(1, "Producto A", 1000, 4);
 
-        // el servicio real de inventario rebaja el stock; aquí se imita para que la 2.ª
-        // línea lo vea rebajado
+        // el servicio real de inventario rebaja el stock; aquí se imita para que la 2.ª línea lo vea rebajado
         when(inventoryMovementService.add(any(InventoryMovement.class))).thenAnswer(call -> {
             InventoryMovement movement = call.getArgument(0);
             product.setProductAmount(product.getProductAmount() - (int) movement.getAmount());
@@ -416,6 +459,217 @@ class SaleServiceTest {
 
         assertSaleFails(cardSale(new SaleItemRequest(1, 2), new SaleItemRequest(1, 3)),
                 "Existencias insuficientes de \"Producto A\": disponibles 2, solicitadas 3");
+    }
+
+    // ---------- venta a crédito ----------
+
+    @Test
+    void credito_conAbonoInicial_creaLaCuentaPorCobrarYElPrimerAbono() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+        LocalDate dueDate = LocalDate.now().plusMonths(3);
+
+        InvoiceResponse invoice = saleService
+                .createSale(creditSale("123456789", 2000.0, 1000.0, dueDate, new SaleItemRequest(1, 5)));
+
+        assertEquals("CREDITO", invoice.paymentMethod());
+        assertTrue(invoice.credit());
+        assertEquals(5000.0, invoice.total(), 0.001);
+        assertEquals(0.0, invoice.change(), 0.001);
+        assertEquals(2000.0, invoice.amountReceived(), 0.001);
+        assertEquals("123456789", invoice.clientId());
+        assertEquals("Cliente Prueba", invoice.clientName());
+        assertEquals(3000.0, invoice.balance(), 0.001);
+        assertEquals(1000.0, invoice.monthlyInstallment(), 0.001);
+        assertEquals(dueDate, invoice.dueDate());
+
+        assertEquals(5000.0, savedAccount.getTotalAmount(), 0.001);
+        assertEquals(2000.0, savedAccount.getInitialPayment(), 0.001);
+        assertEquals(3000.0, savedAccount.getCurrentAmount(), 0.001);
+        assertEquals(7, savedAccount.getIdInvoice());
+        assertEquals("123456789", savedAccount.getIdClient());
+
+        assertEquals(1, savedInstallments.size());
+        assertEquals(2000.0, savedInstallments.get(0).getAmount(), 0.001);
+        assertEquals(5, savedInstallments.get(0).getIdReceivableAccount());
+        assertEquals("123456789", savedInstallments.get(0).getIdClient());
+    }
+
+    @Test
+    void credito_sinAbonoInicial_noRegistraAbonoYElSaldoEsElTotal() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        InvoiceResponse invoice = saleService.createSale(creditSale("123456789", null, 1000.0,
+                LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5)));
+
+        assertEquals(5000.0, invoice.balance(), 0.001);
+        assertEquals(0.0, invoice.amountReceived(), 0.001);
+        assertEquals(0, savedInstallments.size());
+    }
+
+    @Test
+    void credito_abonoInicialCero_noRegistraAbono() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        saleService.createSale(creditSale("123456789", 0.0, 1000.0, LocalDate.now().plusMonths(3),
+                new SaleItemRequest(1, 5)));
+
+        assertEquals(0, savedInstallments.size());
+        assertEquals(5000.0, savedAccount.getCurrentAmount(), 0.001);
+    }
+
+    @Test
+    void credito_rebajaElInventarioComoCualquierVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        saleService.createSale(creditSale("123456789", null, 1000.0, LocalDate.now().plusMonths(3),
+                new SaleItemRequest(1, 5)));
+
+        verify(inventoryMovementService, times(1)).add(any(InventoryMovement.class));
+    }
+
+    @Test
+    void credito_sinCliente_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+
+        assertSaleFails(creditSale(null, null, 1000.0, LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5)),
+                "Debe indicar el cliente de la venta a crédito");
+        assertSaleFails(creditSale("   ", null, 1000.0, LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5)),
+                "Debe indicar el cliente de la venta a crédito");
+    }
+
+    @Test
+    void credito_clienteInexistente_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+
+        assertSaleFails(creditSale("999999999", null, 1000.0, LocalDate.now().plusMonths(3),
+                new SaleItemRequest(1, 5)), "El cliente no existe");
+    }
+
+    @Test
+    void credito_abonoMensualCeroONulo_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        assertSaleFails(creditSale("123456789", null, 0.0, LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5)),
+                "El abono mensual debe ser mayor a cero");
+        assertSaleFails(creditSale("123456789", null, null, LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5)),
+                "El abono mensual debe ser mayor a cero");
+    }
+
+    @Test
+    void credito_sinFechaLimite_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        assertSaleFails(creditSale("123456789", null, 1000.0, null, new SaleItemRequest(1, 5)),
+                "Debe indicar la fecha límite de pago");
+    }
+
+    @Test
+    void credito_fechaLimiteHoyOPasada_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        assertSaleFails(creditSale("123456789", null, 1000.0, LocalDate.now(), new SaleItemRequest(1, 5)),
+                "La fecha límite debe ser posterior a hoy");
+        assertSaleFails(creditSale("123456789", null, 1000.0, LocalDate.now().minusDays(1), new SaleItemRequest(1, 5)),
+                "La fecha límite debe ser posterior a hoy");
+    }
+
+    @Test
+    void credito_abonoInicialNegativo_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        assertSaleFails(creditSale("123456789", -100.0, 1000.0, LocalDate.now().plusMonths(3),
+                new SaleItemRequest(1, 5)), "El abono inicial no puede ser negativo");
+    }
+
+    @Test
+    void credito_abonoInicialIgualAlTotal_rechazaLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        assertSaleFails(creditSale("123456789", 5000.0, 1000.0, LocalDate.now().plusMonths(3),
+                new SaleItemRequest(1, 5)),
+                "El abono inicial debe ser menor al total; si el cliente paga todo, use otro método de pago");
+    }
+
+    @Test
+    void credito_abonoMensualMayorAlSaldo_rechazaLaVentaYNoCreaLaCuenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        // total 5000 - abono inicial 2000 = saldo 3000
+        assertSaleFails(creditSale("123456789", 2000.0, 3500.0, LocalDate.now().plusMonths(3),
+                new SaleItemRequest(1, 5)), "El abono mensual no puede ser mayor al saldo pendiente");
+
+        verify(receivableAccountService, never()).add(any(ReceivableAccount.class));
+        verify(clientInstallmentService, never()).add(any(ClientInstallment.class));
+    }
+
+    @Test
+    void credito_abonoMensualIgualAlSaldo_permiteLaVenta() {
+        addProduct(1, "Producto A", 1000, 10);
+        addClient("123456789", "Cliente Prueba");
+
+        InvoiceResponse invoice = saleService.createSale(creditSale("123456789", 2000.0, 3000.0,
+                LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5)));
+
+        assertEquals(3000.0, invoice.monthlyInstallment(), 0.001);
+        assertEquals(3000.0, invoice.balance(), 0.001);
+    }
+
+    @Test
+    void credito_datosInvalidos_noGuardaNada() {
+        addProduct(1, "Producto A", 1000, 10);
+
+        assertThrows(RuntimeException.class, () -> saleService.createSale(creditSale("999999999", null, 1000.0,
+                LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5))));
+
+        verify(invoiceService, never()).add(any(Invoice.class));
+        verify(inventoryMovementService, never()).add(any(InventoryMovement.class));
+        verify(receivableAccountService, never()).add(any(ReceivableAccount.class));
+    }
+
+    @Test
+    void credito_productoSinExistencias_noCreaLaCuenta() {
+        addProduct(1, "Producto A", 1000, 1);
+        addClient("123456789", "Cliente Prueba");
+
+        assertThrows(RuntimeException.class, () -> saleService.createSale(creditSale("123456789", null, 1000.0,
+                LocalDate.now().plusMonths(3), new SaleItemRequest(1, 5))));
+
+        verify(receivableAccountService, never()).add(any(ReceivableAccount.class));
+    }
+
+    @Test
+    void credito_ventaDeContado_noCreaCuentaPorCobrar() {
+        addProduct(1, "Producto A", 1000, 10);
+
+        InvoiceResponse invoice = saleService.createSale(cashSale(5000.0, new SaleItemRequest(1, 2)));
+
+        verify(receivableAccountService, never()).add(any(ReceivableAccount.class));
+        assertFalse(invoice.credit());
+        assertNull(invoice.clientId());
+        assertEquals(0.0, invoice.balance(), 0.001);
+        assertNull(invoice.dueDate());
+    }
+
+    @Test
+    void credito_ignoraLosDatosDeCreditoEnVentasQueNoSonACredito() {
+        addProduct(1, "Producto A", 1000, 10);
+        SaleRequest request = new SaleRequest("TARJETA", null, List.of(new SaleItemRequest(1, 2)), "999999999",
+                500.0, 100.0, LocalDate.now().plusMonths(1));
+
+        InvoiceResponse invoice = saleService.createSale(request);
+
+        assertFalse(invoice.credit());
+        verify(receivableAccountService, never()).add(any(ReceivableAccount.class));
     }
 
     // ---------- consultar una factura guardada ----------
