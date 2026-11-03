@@ -1,4 +1,5 @@
 import type Product from "../../../interfaces/Product";
+import api from "../../../services/Api";
 
 
 
@@ -50,7 +51,7 @@ function ProductsTable({ filteredProducts, currentProducts, currentPage, totalPa
                                             <div className="d-flex align-items-center gap-3">
                                                 {product.photo ? (
                                                     <img
-                                                        src={`http://localhost:8080/uploads/${product.photo}`}
+                                                        src={`${api.defaults.baseURL?.replace(/\/api\/?$/, "")}/uploads/${product.photo}`}
                                                         alt={product.name}
                                                         style={{
                                                             width: "55px",
