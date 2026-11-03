@@ -29,7 +29,7 @@ export default function RolesUsersPage() {
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [savingUser, setSavingUser] = useState(false);
   const [userMessage, setUserMessage] = useState({ type: '', text: '' });
-  const [userFormData, setUserFormData] = useState({ username: '', password: '', name: '', roleId: 1 });
+  const [userFormData, setUserFormData] = useState({ username: '', password: '', name: '', email: '', roleId: 1 });
 
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [isEditingRole, setIsEditingRole] = useState(false);
@@ -135,7 +135,7 @@ export default function RolesUsersPage() {
   const handleOpenCreateModal = () => {
     setIsEditing(false);
     setEditingUserId(null);
-    setUserFormData({ username: '', password: '', name: '', roleId: roles[0]?.id || 1 });
+    setUserFormData({ username: '', password: '', name: '', email: '', roleId: roles[0]?.id || 1 });
     setUserMessage({ type: '', text: '' });
     setShowUserModal(true);
   };
@@ -143,7 +143,7 @@ export default function RolesUsersPage() {
   const handleOpenEditModal = (user: UserResponse) => {
     setIsEditing(true);
     setEditingUserId(user.id);
-    setUserFormData({ username: user.username, password: '', name: user.name, roleId: user.idRole });
+    setUserFormData({ username: user.username, password: '', name: user.name, email: user.email, roleId: user.idRole });
     setUserMessage({ type: '', text: '' });
     setShowUserModal(true);
   };

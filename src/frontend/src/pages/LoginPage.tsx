@@ -1,6 +1,6 @@
 // src/pages/LoginPage.tsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/atoms/Button';
 
@@ -58,9 +58,9 @@ export default function LoginPage() {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
-                        <a href="/forgot-password" className="text-decoration-none">
-                            ¿Olvidaste tu contraseña?
-                        </a>
+                        <Link to="/forgot-password" className="text-decoration-none float-end mt-1" style={{ fontSize: '0.9rem', marginTop: '5px', marginBottom: '5px' }}>
+                            Recuperar Contraseña
+                        </Link>
                     </div>
                     <Button
                         type="submit"

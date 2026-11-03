@@ -1,5 +1,6 @@
 package com.nutrivet.backend.controller;
 
+import com.nutrivet.backend.service.PasswordResetService;
 import com.nutrivet.backend.domain.LoginRequest;
 import com.nutrivet.backend.service.JwtService;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Value;
-import com.nutrivet.backend.dto.RecoverPasswordRequest;
+import com.nutrivet.backend.dto.ForgotPasswordRequest;
+import com.nutrivet.backend.dto.ResetPasswordRequest;
 import com.nutrivet.backend.domain.User;
 import com.nutrivet.backend.repository.UserRepository;
 import java.util.HashMap;
@@ -32,15 +34,20 @@ public class AuthController {
     private final UserDetailsService userDetailsService;
     private final JwtService jwtService;
 
+
     private final PasswordEncoder passwordEncoder;
+    
+    private final PasswordResetService passwordResetService;
+
 
     public AuthController(AuthenticationManager authenticationManager, UserDetailsService userDetailsService,
-            JwtService jwtService, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+            JwtService jwtService, UserRepository userRepository, PasswordResetService passwordService, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.passwordResetService = passwordService;
     }
 
     @PostMapping("/login")
@@ -61,24 +68,30 @@ public class AuthController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", jwt);
-        response.put("permissions", permissions); 
+        response.put("permissions", permissions);
 
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/recover-password")
-    public ResponseEntity<?> recoverPassword(@RequestBody RecoverPasswordRequest request) {
-
-        if (!request.getMasterKey().equals(masterRecoveringKey)) {
-            return ResponseEntity.status(403).body("Clave maestra inválida. Acción denegada.");
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            passwordResetService.createTokenForEmail(request.getEmail());
+            
+            return ResponseEntity.ok("Si el correo está registrado, recibirás un código.");
+        } catch (Exception e) {
+            
+            return ResponseEntity.ok("Si el correo está registrado, recibirás un código.");
         }
+    }
 
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
-
-        return ResponseEntity.ok("Contraseña restablecida exitosamente para el usuario: " + request.getUsername());
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok("Contraseña actualizada correctamente.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

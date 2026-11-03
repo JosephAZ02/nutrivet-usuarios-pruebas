@@ -15,8 +15,13 @@ export const AuthService = {
     },
 
 
-    recoverPassword: async (data: RecoverPasswordRequest): Promise<string> => {
-        const response = await api.post('/auth/recover-password', data);
+    forgotPassword: async (email: string) => {
+        const response = await api.post('/auth/forgot-password', { email });
+        return response.data;
+    },
+
+    resetPassword: async (token: string, newPassword: string) => {
+        const response = await api.post('/auth/reset-password', { token, newPassword });
         return response.data;
     },
 };
