@@ -1,24 +1,27 @@
 import type { PaymentMethod } from "../../interfaces/Sale";
+import type CreditData from "../../interfaces/CreditData";
 import Input from "../atoms/Input";
 import { formatCurrency } from "../../utils/formatCurrency";
 
-
-const methods: { label: string; value: PaymentMethod | null }[] = [
+const methods: { label: string; value: PaymentMethod }[] = [
     { label: "Efectivo", value: "EFECTIVO" },
     { label: "Tarjeta", value: "TARJETA" },
     { label: "SINPE", value: "SINPE" },
-    { label: "Crédito", value: null },
+    { label: "Crédito", value: "CREDITO" },
 ];
 
 interface PaymentSummaryProps {
-    total: number;
-    paymentMethod: PaymentMethod;
+    total: number; 
+    paymentMethod: PaymentMethod; 
     onMethodChange: (method: PaymentMethod) => void;
-    amountReceived: string; //monto que entrega el cliente
-    onAmountChange: (amount: string) => void; //se ejecuta al escribir el monto
+    amountReceived: string; 
+    onAmountChange: (amount: string) => void; 
+    creditData: CreditData | null; 
+    creditClientName: string; 
+    onConfigureCredit: () => void; 
 }
 
-function PaymentSummary({ total, paymentMethod, onMethodChange, amountReceived, onAmountChange }: PaymentSummaryProps) {
+function PaymentSummary({ total, paymentMethod, onMethodChange, amountReceived, onAmountChange, creditData, creditClientName, onConfigureCredit }: PaymentSummaryProps) {
     const received = Number(amountReceived);
     const isShort = amountReceived !== "" && received < total; //el monto no alcanza
     const change = amountReceived === "" || isShort ? 0 : received - total;
@@ -31,9 +34,8 @@ function PaymentSummary({ total, paymentMethod, onMethodChange, amountReceived, 
                     <button
                         key={method.label}
                         type="button"
-                        disabled={method.value === null}
                         className={`btn btn-sm flex-fill ${method.value === paymentMethod ? "btn-success" : "btn-outline-secondary"}`}
-                        onClick={() => method.value !== null && onMethodChange(method.value)}
+                        onClick={() => onMethodChange(method.value)}
                     >
                         {method.label}
                     </button>
@@ -56,8 +58,42 @@ function PaymentSummary({ total, paymentMethod, onMethodChange, amountReceived, 
                     {isShort && <small className="text-danger">El monto recibido es menor al total.</small>}
                 </div>
             )}
+
             {paymentMethod === "SINPE" && (
                 <small className="text-muted">Confirma que el pago SINPE ingresó antes de completar la venta.</small>
+            )}
+
+            {paymentMethod === "CREDITO" && creditData === null && (
+                <button type="button" className="btn btn-outline-success w-100" onClick={onConfigureCredit}>
+                    Configurar crédito
+                </button>
+            )}
+
+            {paymentMethod === "CREDITO" && creditData !== null && (
+                <div className="bg-light rounded-3 p-3 small">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                        <strong>{creditClientName}</strong>
+                        <button type="button" className="btn btn-link btn-sm text-success text-decoration-none p-0" onClick={onConfigureCredit}>
+                            Cambiar
+                        </button>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                        <span className="text-muted">Abono inicial</span>
+                        <span>{formatCurrency(creditData.initialPayment === "" ? 0 : Number(creditData.initialPayment))}</span>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                        <span className="text-muted">Saldo pendiente</span>
+                        <span>{formatCurrency(total - (creditData.initialPayment === "" ? 0 : Number(creditData.initialPayment)))}</span>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                        <span className="text-muted">Abono mensual</span>
+                        <span>{formatCurrency(Number(creditData.monthlyInstallment))}</span>
+                    </div>
+                    <div className="d-flex justify-content-between">
+                        <span className="text-muted">Fecha límite</span>
+                        <span>{creditData.dueDate.split("-").reverse().join("/")}</span>
+                    </div>
+                </div>
             )}
         </div>
     );

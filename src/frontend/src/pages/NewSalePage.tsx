@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import type Product from "../interfaces/Product";
 import type ProductCategory from "../interfaces/ProductCategory";
 import type CartItem from "../interfaces/CartItem";
+import type Client from "../interfaces/Client";
+import type CreditData from "../interfaces/CreditData";
 import type { InvoiceResponse, PaymentMethod, SaleRequest } from "../interfaces/Sale";
 import { getAllProducts, searchProductByCode } from "../services/ProductService";
 import { getActiveProductCategories } from "../services/ProductCategoryService";
 import { createSale } from "../services/SaleService";
-import { showError, showWarning, showConfirm } from "../utils/alerts";
+import { addClient, getAllClients } from "../services/ClientService";
+import { showConfirm, showError, showWarning } from "../utils/alerts";
 import { formatCurrency } from "../utils/formatCurrency";
 import Button from "../components/atoms/Button";
 import ProductSearchBar from "../components/molecules/ProductSearchBar";
@@ -16,8 +19,10 @@ import Pagination from "../components/molecules/Pagination";
 import CartRow from "../components/molecules/CartRow";
 import PaymentSummary from "../components/molecules/PaymentSummary";
 import InvoiceModal from "../components/organism/sales/InvoiceModal";
+import CreditModal from "../components/organism/sales/CreditModal";
+import ClientFormModal from "../components/organism/sales/ClientFormModal";
 
-const PAGE_SIZE = 6; // productos por página
+const PAGE_SIZE = 6; // productos por página (llena filas completas de 2 o de 3)
 
 export default function NewSalePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,12 +30,18 @@ export default function NewSalePage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true); // true mientras se cargan los productos
+  const [loading, setLoading] = useState(true); 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("EFECTIVO");
   const [amountReceived, setAmountReceived] = useState("");
   const [saving, setSaving] = useState(false);
-  const [invoice, setInvoice] = useState<InvoiceResponse | null>(null); // factura recién cobrada
+  const [invoice, setInvoice] = useState<InvoiceResponse | null>(null); 
+  const [clients, setClients] = useState<Client[]>([]); // clientes para las ventas a crédito
+  const [showCredit, setShowCredit] = useState(false); // ventana del crédito abierta
+  const [showClientForm, setShowClientForm] = useState(false); // ventana de nuevo cliente abierta
+  const [savingClient, setSavingClient] = useState(false);
+  const [creditData, setCreditData] = useState<CreditData>({ clientId: "", initialPayment: "", monthlyInstallment: "", dueDate: "" });
+  const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null); // total con el que se confirmó el crédito
 
   // al abrir la pantalla se cargan los productos y las categorías
   useEffect(() => {
@@ -88,11 +99,22 @@ export default function NewSalePage() {
     total = total + item.product.unitPrice * item.quantity;
   }
 
-
+  // se puede cobrar si hay productos y, en efectivo, el monto recibido alcanza
   const cashIsEnough = amountReceived !== "" && Number(amountReceived) >= total;
-  const canPay = cart.length > 0 && (paymentMethod !== "EFECTIVO" || cashIsEnough);
 
-  // mensajes que explican por qué el botón de cobrar está desactivado
+  // el crédito sirve solo si se confirmó con el total actual (si el carrito cambia, hay que confirmarlo de nuevo)
+  const creditReady = confirmedTotal !== null && confirmedTotal === total;
+  const creditClientName = clients.find((c) => c.id === creditData.clientId)?.name ?? "";
+
+  let methodIsReady = true;
+  if (paymentMethod === "EFECTIVO") {
+    methodIsReady = cashIsEnough;
+  } else if (paymentMethod === "CREDITO") {
+    methodIsReady = creditReady;
+  }
+  const canPay = cart.length > 0 && methodIsReady;
+
+  // mensaje que explica por qué el botón de cobrar está desactivado
   let payHint = "";
   if (cart.length === 0) {
     payHint = "Debes agregar productos al carrito";
@@ -100,6 +122,8 @@ export default function NewSalePage() {
     payHint = "Ingresa el monto recibido para poder cobrar";
   } else if (paymentMethod === "EFECTIVO" && !cashIsEnough) {
     payHint = "El monto recibido no alcanza para cubrir el total";
+  } else if (paymentMethod === "CREDITO" && !creditReady) {
+    payHint = "Configura el crédito para poder cobrar";
   }
 
   // agrega el producto al detalle, o le suma una unidad si ya estaba
@@ -130,15 +154,68 @@ export default function NewSalePage() {
     setAmountReceived("");
   }
 
+  // abre la ventana del crédito (carga los clientes la primera vez)
+  async function handleConfigureCredit() {
+    if (cart.length === 0) {
+      showWarning("Carrito vacío", "Primero agrega productos para configurar el crédito");
+      return;
+    }
+
+    setShowCredit(true);
+
+    try {
+      setClients(await getAllClients());
+    } catch (err: any) {
+      showError(err, "No se pudieron cargar los clientes");
+    }
+  }
+
+  // al elegir un método de pago; con crédito se abre su ventana
+  function handleMethodChange(method: PaymentMethod) {
+    setPaymentMethod(method);
+    if (method === "CREDITO") {
+      handleConfigureCredit();
+    }
+  }
+
+  // el crédito queda confirmado con el total actual de la venta
+  function handleConfirmCredit() {
+    setConfirmedTotal(total);
+    setShowCredit(false);
+  }
+
+  // registra un cliente nuevo y lo deja elegido en el crédito
+  async function handleSaveClient(client: Client) {
+    setSavingClient(true);
+
+    try {
+      const savedClient = await addClient(client);
+      setClients([...clients, savedClient]);
+      setCreditData({ ...creditData, clientId: savedClient.id });
+      setShowClientForm(false);
+    } catch (err: any) {
+      showError(err, "No se pudo registrar el cliente");
+    } finally {
+      setSavingClient(false);
+    }
+  }
+
   // registra la venta en el backend
   async function handleCompleteSale() {
     // resumen que se muestra antes de cobrar
-        let summary = `Total: <b>${formatCurrency(total)}</b><br>`;
+    let summary = `Total: <b>${formatCurrency(total)}</b><br>`;
     if (paymentMethod === "EFECTIVO") {
       summary += `Recibido: <b>${formatCurrency(Number(amountReceived))}</b><br>`;
       summary += `Vuelto: <b>${formatCurrency(Number(amountReceived) - total)}</b>`;
     } else if (paymentMethod === "SINPE") {
       summary += "Pago con SINPE";
+    } else if (paymentMethod === "CREDITO") {
+      const initial = creditData.initialPayment === "" ? 0 : Number(creditData.initialPayment);
+      summary += `Cliente: <b>${creditClientName}</b><br>`;
+      summary += `Abono inicial: <b>${formatCurrency(initial)}</b><br>`;
+      summary += `Saldo pendiente: <b>${formatCurrency(total - initial)}</b><br>`;
+      summary += `Abono mensual: <b>${formatCurrency(Number(creditData.monthlyInstallment))}</b><br>`;
+      summary += `Fecha límite: <b>${creditData.dueDate.split("-").reverse().join("/")}</b>`;
     } else {
       summary += "Pago con tarjeta";
     }
@@ -157,10 +234,19 @@ export default function NewSalePage() {
         items: cart.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
       };
 
+      if (paymentMethod === "CREDITO") {
+        request.clientId = creditData.clientId;
+        request.initialPayment = creditData.initialPayment === "" ? null : Number(creditData.initialPayment);
+        request.monthlyInstallment = Number(creditData.monthlyInstallment);
+        request.dueDate = creditData.dueDate;
+      }
+
       const newInvoice = await createSale(request);
       setInvoice(newInvoice); // se muestra la factura en una ventana
       setCart([]);
       setAmountReceived("");
+      setConfirmedTotal(null);
+      setCreditData({ clientId: "", initialPayment: "", monthlyInstallment: "", dueDate: "" });
     } catch (err: any) {
       showError(err, "No se pudo registrar la venta");
     } finally {
@@ -170,7 +256,7 @@ export default function NewSalePage() {
     refreshProducts(); // si el stock cambió (o pudo haber cambiado), se actualiza el catálogo
   }
 
-  // al presionar Enter (o al escanear un código) se busca el producto por código y se agrega al detalle
+
   async function handleSearchSubmit() {
     const code = searchText.trim();
     if (code === "") {
@@ -272,9 +358,12 @@ export default function NewSalePage() {
               <PaymentSummary
                 total={total}
                 paymentMethod={paymentMethod}
-                onMethodChange={setPaymentMethod}
+                onMethodChange={handleMethodChange}
                 amountReceived={amountReceived}
                 onAmountChange={setAmountReceived}
+                creditData={creditReady ? creditData : null}
+                creditClientName={creditClientName}
+                onConfigureCredit={handleConfigureCredit}
               />
             </div>
 
@@ -290,6 +379,20 @@ export default function NewSalePage() {
       </div>
 
       {invoice !== null && <InvoiceModal invoice={invoice} onClose={() => setInvoice(null)} />}
+
+      {showCredit && (
+        <CreditModal
+          total={total}
+          clients={clients}
+          data={creditData}
+          onChange={setCreditData}
+          onNewClient={() => setShowClientForm(true)}
+          onConfirm={handleConfirmCredit}
+          onClose={() => setShowCredit(false)}
+        />
+      )}
+
+      {showClientForm && <ClientFormModal saving={savingClient} onSave={handleSaveClient} onClose={() => setShowClientForm(false)} />}
     </div>
   );
 }
