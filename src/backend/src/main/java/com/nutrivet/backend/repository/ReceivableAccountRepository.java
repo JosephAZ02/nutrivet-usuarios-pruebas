@@ -18,6 +18,7 @@ public interface ReceivableAccountRepository extends JpaRepository<ReceivableAcc
 
     Optional<ReceivableAccount> findByIdInvoice(int idInvoice);
 
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<ReceivableAccount> findWithLockById(Integer id);
 }

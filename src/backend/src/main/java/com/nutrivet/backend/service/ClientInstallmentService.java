@@ -10,6 +10,7 @@ import com.nutrivet.backend.repository.ClientInstallmentRepository;
 public class ClientInstallmentService {
 
     private final ClientInstallmentRepository clientInstallmentRepository;
+
     public ClientInstallmentService(ClientInstallmentRepository clientInstallmentRepository) {
         this.clientInstallmentRepository = clientInstallmentRepository;
     }
@@ -20,6 +21,11 @@ public class ClientInstallmentService {
 
     public Optional<ClientInstallment> getById(Integer id) {
         return clientInstallmentRepository.findById(id);
+    }
+
+    // historial de abonos de una cuenta por cobrar, del primero al último
+    public List<ClientInstallment> getByReceivableAccountId(int idReceivableAccount) {
+        return clientInstallmentRepository.findByIdReceivableAccountOrderByIdAsc(idReceivableAccount);
     }
 
     public ClientInstallment add(ClientInstallment clientInstallment) {
