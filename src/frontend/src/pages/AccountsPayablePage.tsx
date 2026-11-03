@@ -5,6 +5,7 @@ import {
     getAllSupplierPayments,
     getInvoiceList,
     getSupplierPaymentsByInvoiceId,
+    deleteSupplierInvoice,
     rejectSupplierInvoice,
     reviewSupplierInvoice,
     saveSupplierPayment,
@@ -17,6 +18,7 @@ import type SupplierPayment from "../interfaces/SupplierPayment";
 import type { SupplierPaymentCreate } from "../interfaces/SupplierPayment";
 import type SupplierInvoiceReview from "../interfaces/SupplierInvoiceReview";
 import { ModalReviewSupplierInvoice } from "../components/organism/ModalReviewSupplierInvoice";
+import { showConfirm, showError, showSuccess } from "../utils/alerts";
 
 
 
@@ -223,6 +225,30 @@ export function AccountsPayablePage() {
         }
     };
 
+    const handleRemove = async (invoiceSupplierId: number) => {
+        const invoice = invoices.find((item) => item.id === invoiceSupplierId);
+        if (!invoice) return;
+
+        const confirmed = await showConfirm(
+            "¿Quitar factura?",
+            "La factura será eliminada permanentemente.",
+            "Quitar"
+        );
+        if (!confirmed) return;
+
+        try {
+            setSaving(true);
+            await deleteSupplierInvoice(invoice);
+            await fetchData();
+            showSuccess("Factura eliminada", "La factura se quitó correctamente.");
+        } catch (error) {
+            console.error(error);
+            showError(error, "No se pudo quitar la factura.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleViewPayments = async (invoiceSupplierId: number) => {
         const invoice = invoices.find(
             (invoice) => invoice.id === invoiceSupplierId
@@ -300,6 +326,7 @@ export function AccountsPayablePage() {
                 invoiceIds={filteredInvoices.map((invoice) => invoice.id)}
                 onPayment={handlePayment}
                 onViewPayments={handleViewPayments}
+                onRemove={handleRemove}
                 reviewInvoiceIds={filteredInvoices
                     .filter((invoice) => invoice.state === "REVIEW")
                     .map((invoice) => invoice.id)}

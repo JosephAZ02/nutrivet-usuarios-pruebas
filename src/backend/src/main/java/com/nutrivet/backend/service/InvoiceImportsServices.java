@@ -2,6 +2,7 @@ package com.nutrivet.backend.service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +19,8 @@ import com.nutrivet.backend.util.XmlInvoiceParser;
 
 @Service
 public class InvoiceImportsServices {
+
+    private static final ZoneId COSTA_RICA_ZONE = ZoneId.of("America/Costa_Rica");
 
     private final InvoiceImportsRepository invoiceImportsRepository;
     private final SupplierInvoiceRepository supplierInvoiceRepository;
@@ -39,7 +42,7 @@ public class InvoiceImportsServices {
         }
 
         if (invoiceImport.getImportedAt() == null) {
-            invoiceImport.setImportedAt(LocalDateTime.now());
+            invoiceImport.setImportedAt(LocalDateTime.now(COSTA_RICA_ZONE));
         }
 
         return invoiceImportsRepository.save(invoiceImport);
@@ -128,7 +131,8 @@ public class InvoiceImportsServices {
         invoiceImport.setMessageId(messageId);
         invoiceImport.setFileName(fileName);
         invoiceImport.setElectronicKey(data.getElectronicKey());// guardar la clave electronica de la factura
-        invoiceImport.setImportedAt(LocalDateTime.now());// guardar la fecha y hora de la importacion
+        invoiceImport.setImportedAt(
+                LocalDateTime.now(COSTA_RICA_ZONE));// guardar la fecha y hora de la importacion
         invoiceImport.setStatus("PROCESSED");// guardar el estado de la importacion como procesada
         invoiceImportsRepository.save(invoiceImport);// guardar el registro de importacion en la base de datos
 

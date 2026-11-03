@@ -10,6 +10,7 @@ interface ReportResultsProps {
     invoiceIds?: number[];
     onPayment?: (invoiceId: number) => void;
     onViewPayments?: (invoiceId: number) => void;
+    onRemove?: (invoiceId: number) => void;
     reviewInvoiceIds?: number[];
     onReview?: (invoiceId: number) => void;
 }
@@ -43,7 +44,7 @@ const getStatusBadgeClass = (status: string) => {
     }
 };
 
-function ReportResults({ headers, rows, title, loading = false, invoiceIds, onPayment, onViewPayments, reviewInvoiceIds, onReview }: ReportResultsProps) {
+function ReportResults({ headers, rows, title, loading = false, invoiceIds, onPayment, onViewPayments, onRemove, reviewInvoiceIds, onReview }: ReportResultsProps) {
     const rowsPerPage = 8;
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.ceil(rows.length / rowsPerPage);
@@ -100,8 +101,19 @@ function ReportResults({ headers, rows, title, loading = false, invoiceIds, onPa
                                                 : cell}
                                         </td>
                                     ))}
-                                    {title === "Cuentas por pagar" && reviewInvoiceIds?.includes(invoiceIds?.[rowIndex] ?? 0) ? (
-                                        <td className="text-nowrap">
+                                    {title === "Cuentas por pagar" && row[headers.indexOf("Condición")] === "Contado" ? (
+                                        <td className="text-start text-nowrap">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="btn-sm px-3 py-1 border-danger text-danger"
+                                                onClick={() => onRemove?.(invoiceIds?.[rowIndex] ?? 0)}
+                                            >
+                                                Quitar
+                                            </Button>
+                                        </td>
+                                    ) : title === "Cuentas por pagar" && reviewInvoiceIds?.includes(invoiceIds?.[rowIndex] ?? 0) ? (
+                                        <td className="text-start text-nowrap">
                                             <Button
                                                 type="button"
                                                 variant="outline"
@@ -112,7 +124,7 @@ function ReportResults({ headers, rows, title, loading = false, invoiceIds, onPa
                                             </Button>
                                         </td>
                                     ) : title === "Cuentas por pagar" && (
-                                        <td>
+                                        <td className="text-start">
                                             <div className="d-flex flex-wrap gap-2">
                                                 <Button
                                                     type="button"

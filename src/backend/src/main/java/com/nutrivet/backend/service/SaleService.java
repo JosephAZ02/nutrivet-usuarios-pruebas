@@ -1,6 +1,7 @@
 package com.nutrivet.backend.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,8 @@ import com.nutrivet.backend.dto.SaleRequest;
 
 @Service
 public class SaleService {
+
+    private static final ZoneId COSTA_RICA_ZONE = ZoneId.of("America/Costa_Rica");
 
     private static final String CASH = "EFECTIVO";
     private static final String CARD = "TARJETA";
@@ -43,7 +46,7 @@ public class SaleService {
         // La factura se guarda primero para tener su id y los totales se completan al
         // final
         Invoice invoice = new Invoice();
-        invoice.setDate(LocalDateTime.now());
+        invoice.setDate(LocalDateTime.now(COSTA_RICA_ZONE));
         invoice.setPaymentMethod(request.paymentMethod());
         invoice = invoiceService.add(invoice);
 
