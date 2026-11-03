@@ -10,7 +10,7 @@ function SideBar() {
 
     const navigate = useNavigate();
     const [activeItem, setActiveItem] = useState("");
-    const { logout, hasPermission } = useAuth();
+    const { logout, hasPermission, user } = useAuth();
 
     return (
         <div className="d-flex flex-column flex-shrink-0  text-bg-dark align-items-left" id="sidebar">
@@ -87,13 +87,21 @@ function SideBar() {
             </ul>
 
             <hr />
-            <div className="align-items-center text-center ">
-                <Button className="dropdown-item" onClick={logout}>
-                    <i className="bi bi-box-arrow-right me-2" aria-hidden="true" ></i>
-                    Cerrar sesión
+            <div className="d-flex flex-column align-items-center mb-2">
+                
+                <span className="text-white fw-bold" style={{ fontSize: '0.9rem' }}>
+                    {(user?.name || 'Usuario')}
+                </span>
+                
+            </div>
+
+            <div className="align-items-center text-center px-3 pb-3">
+                <Button className="dropdown-item text-danger w-100 rounded" onClick={logout}>
+                    <i className="bi bi-box-arrow-right me-2"></i> Cerrar sesión
                 </Button>
             </div>
         </div>
+
     );
 }
 
