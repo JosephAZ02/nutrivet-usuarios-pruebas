@@ -69,20 +69,26 @@ pipeline {
             }
         }
 
-        stage('3 Levantar Servidores (Back y Front) Para Pruebas Selenium') {
+        stage('3. Levantar Servidores para Selenium') {
             steps {
-                echo 'Iniciando Spring Boot y Vite en segundo plano...'
-                // Levantar Backend
-                dir('src/backend') {
-                    bat 'start cmd /c "./mvnw spring-boot:run"'
+                echo 'Inyectando archivo de configuración secreto...'
+                
+                
+                withCredentials([file(credentialsId: 'app-local-properties', variable: 'APP_PROPS')]) {
+                    
+                    bat 'copy "%APP_PROPS%" "src//backend//src//main//resources//application-local.properties"'
+
+                    echo 'Iniciando Spring Boot y Vite en segundo plano...'
+                    dir('src/backend') {
+                        bat 'start cmd /c "./mvnw spring-boot:run"'
+                    }
+                    dir('src/frontend') {
+                        bat 'start cmd /c "npm run dev"'
+                    }
+                    
+                    echo 'Esperando 40 segundos...'
+                    sleep(time: 40, unit: 'SECONDS') 
                 }
-                // Levantar Frontend
-                dir('src/frontend') {
-                    bat 'start cmd /c "npm run dev"'
-                }
-                // Esperar a que ambos estén listos
-                echo 'Esperando 40 segundos para que los servidores inicien completamente...'
-                sleep(time: 40, unit: 'SECONDS') 
             }
         }
 
@@ -109,18 +115,22 @@ pipeline {
         }
         
 
-        stage('5. Checkout a STG') {
+        stage('6. Checkout a STG') {
             steps {
                 echo 'Haciendo checkout automático a STG...'
                 bat 'git config --global user.email "jyalfazu021421@gmail.com"'
                 bat 'git config --global user.name "JosephAZ02"'
+                
+                bat 'if exist "src\\backend\\src\\main\\resources\\application-local.properties" del "src\\backend\\src\\main\\resources\\application-local.properties"'
                 bat 'git reset --hard'
                 bat 'git clean -fd'
+
+                
                 bat 'git checkout STG'
             }
         }
 
-        stage('6. Merge y push a STG'){
+        stage('7. Merge y push a STG'){
             steps {
                 echo 'Haciendo merge automático a STG...'
                 bat 'git merge DEV --no-edit'
@@ -131,14 +141,14 @@ pipeline {
             }
         }
 
-        stage('7. Checkout a MASTER') {
+        stage('8. Checkout a MASTER') {
             steps {
                 echo 'Haciendo checkout automático a MASTER...'
                 bat 'git checkout MASTER'
             }
         }
 
-        stage('8. Merge y push a MASTER'){
+        stage('9. Merge y push a MASTER'){
             steps {
                 echo 'Haciendo merge automático a MASTER...'
                 bat 'git merge STG --no-edit'
@@ -149,7 +159,7 @@ pipeline {
             }
         }
 
-        stage('9. Compilar Frontend (React) para subirlo por ftp') {
+        stage('10. Compilar Frontend (React) para subirlo por ftp') {
             steps {
                 dir('src/frontend') {
                     echo 'Instalando dependencias y compilando React...'
@@ -159,7 +169,7 @@ pipeline {
             }
         }
 
-        stage('10. Desplegar vía FTP') {
+        stage('11. Desplegar vía FTP') {
             steps {
                 echo 'Subiendo archivos de React a FileZilla...'
                 ftpPublisher(
