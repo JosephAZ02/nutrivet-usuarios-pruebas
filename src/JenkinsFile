@@ -47,9 +47,9 @@ pipeline {
             }
         }
 
-        stage('5. Merge a STG y MASTER') {
+        stage('5. Checkout a STG') {
             steps {
-                echo 'Haciendo merge automático a STG y MASTER...'
+                echo 'Haciendo checkout automático a STG...'
 
                 // Configurae identidad de Git para que no falle el merge
                 bat 'git config --global user.email "jyalfazu021421@gmail.com"'
@@ -59,11 +59,9 @@ pipeline {
                 bat 'git reset --hard'
                 bat 'git clean -fd'
                 
-                // Merge a STG
+              
                 bat 'git checkout STG'
-                bat 'git merge DEV --no-edit'
-                bat 'git push origin STG'
-                
+               
                 // Merge a MASTER
                 //bat 'git checkout MASTER'
                 //bat 'git merge STG --no-edit'
@@ -71,8 +69,36 @@ pipeline {
             }
         }
 
+        stage('6. Merge y push a STG'){
+            steps {
 
-       stage('6. Desplegar vía FTP') {
+                bat 'git merge DEV --no-edit'
+                bat 'git push origin STG'
+                
+            }
+        }
+
+        stage('7. Checkout a MASTER') {
+            steps {
+                echo 'Haciendo checkout automático a MASTER...'
+
+                bat 'git checkout MASTER'
+               
+                
+            }
+        }
+
+        stage('8. Merge y push a MASTER'){
+            steps {
+
+                
+                bat 'git merge STG --no-edit'
+                bat 'git push origin MASTER'
+                
+            }
+        }
+
+       stage('9. Desplegar vía FTP') {
             steps {
                 echo 'Subiendo archivos de React a FileZilla (C:/Despliegue_NutriVet)...'
                 ftpPublisher(
