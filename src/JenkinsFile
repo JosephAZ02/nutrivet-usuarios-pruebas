@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        EMAIL_TO = 'tu-correo@gmail.com' // <-- CAMBIA ESTO POR TU CORREO REAL
+        EMAIL_TO = 'nutrivetwg@gmail.com'
     }
 
     stages {
@@ -91,8 +91,8 @@ pipeline {
             echo 'Enviando correo de éxito...'
             emailext (
                 subject: "✅ BUILD SUCCESS: NutriVet - #${env.BUILD_NUMBER}",
-                body: "El pipeline ha finalizado con éxito. Las pruebas pasaron, el código se mergeó a MASTER y los archivos ya están en el servidor.",
-                to: "nutrivetwg@gmail.com",
+                body: "El pipeline ha finalizado con éxito. Las pruebas de usuario pasaron, el código se mergeó a MASTER y los archivos ya están en el servidor.",
+                to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com'
             )
         }
@@ -100,8 +100,8 @@ pipeline {
             echo 'Enviando correo de error...'
             emailext (
                 subject: "❌ BUILD FAILED: NutriVet - #${env.BUILD_NUMBER}",
-                body: "El pipeline ha fallado. Revisa el log en Jenkins. Los cambios NO se han subido a producción.",
-                to: "nutrivetwg@gmail.com",
+                body: "El pipeline de las pruebas del módulo de usuarios ha fallado. Revisa el log en Jenkins. Los cambios NO se han subido a producción.",
+                to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com'
             )
         }
