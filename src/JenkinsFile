@@ -76,20 +76,31 @@ pipeline {
                     
                     bat 'copy "%APP_PROPS%" "src\\backend\\src\\main\\resources\\application-local.properties"'
 
-                    echo 'Iniciando Spring Boot y Vite en segundo plano...'
+                    echo 'Iniciando Spring Boot y Vite (guardando logs)...'
+                    
+                    // Levantar Backend y guardar logs en un archivo
                     dir('src/backend') {
-                        bat 'start cmd /c "./mvnw spring-boot:run"'
+                        powershell 'Start-Process -FilePath "cmd.exe" -ArgumentList "/c .\\mvnw spring-boot:run > backend.log 2>&1" -WindowStyle Hidden'
                     }
+                    
+                    // Levantar Frontend y guardar logs
                     dir('src/frontend') {
-                        bat 'start cmd /c "npm run dev"'
+                        powershell 'Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm run dev > frontend.log 2>&1" -WindowStyle Hidden'
                     }
                     
                     echo 'Esperando 60 segundos para que los servidores inicien...'
                     sleep(time: 60, unit: 'SECONDS') 
 
                     echo 'Verificando que el Backend esté respondiendo...'
-                    // Esto hará que el pipeline falle si el backend no responde
-                    bat 'curl -s -o /dev/null -w "%%{http_code}" http://localhost:8080/api/auth/login || exit 1'
+                    // Verificamos si responde. Si falla, imprimimos el log del backend
+                    script {
+                        def status = bat(script: 'curl -s -o /dev/null -w "%%{http_code}" http://localhost:8080/api/auth/login', returnStatus: true)
+                        if (status != 0) {
+                            echo 'ERROR: El Backend no está respondiendo. Mostrando los últimos logs:'
+                            bat 'type src/backend/backend.log'
+                            error("El Backend falló al arrancar. Revisa el log de arriba.")
+                        }
+                    }
                 }
             }
         }
