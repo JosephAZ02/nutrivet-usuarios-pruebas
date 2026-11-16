@@ -9,9 +9,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Value;
+
 import com.nutrivet.backend.dto.ForgotPasswordRequest;
 import com.nutrivet.backend.dto.ResetPasswordRequest;
 import com.nutrivet.backend.domain.User;
@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/auth")
 public class AuthController {
 
