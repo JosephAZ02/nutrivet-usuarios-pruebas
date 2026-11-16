@@ -3,11 +3,12 @@ pipeline {
 
     tools {
         maven 'Maven' 
-        jdk 'JDK25'
+        jdk 'JDK25' // Deja el que te funcionó
     }
 
     environment {
         EMAIL_TO = 'nutrivetwg@gmail.com'
+        REPO_URL = 'github.com/JosephAZ02/nutrivet-usuarios-pruebas.git'
     }
 
     stages {
@@ -22,7 +23,6 @@ pipeline {
             steps {
                 dir('src/backend') {
                     echo 'Ejecutando pruebas unitarias de Java...'
-                    
                     bat './mvnw test "-Dtest=UserServiceTest"'
                 }
             }
@@ -50,55 +50,42 @@ pipeline {
         stage('5. Checkout a STG') {
             steps {
                 echo 'Haciendo checkout automático a STG...'
-
-                // Configurae identidad de Git para que no falle el merge
                 bat 'git config --global user.email "jyalfazu021421@gmail.com"'
                 bat 'git config --global user.name "JosephAZ02"'
-
-                //limpiar archivos temporales
                 bat 'git reset --hard'
                 bat 'git clean -fd'
-                
-              
                 bat 'git checkout STG'
-               
-                // Merge a MASTER
-                //bat 'git checkout MASTER'
-                //bat 'git merge STG --no-edit'
-                //bat 'git push origin MASTER'
             }
         }
 
         stage('6. Merge y push a STG'){
             steps {
-
                 bat 'git merge DEV --no-edit'
-                bat 'git push origin STG'
                 
+                withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                    bat "git push https://${GIT_USER}:${GIT_PASS}@${REPO_URL} STG"
+                }
             }
         }
 
         stage('7. Checkout a MASTER') {
             steps {
                 echo 'Haciendo checkout automático a MASTER...'
-
                 bat 'git checkout MASTER'
-               
-                
             }
         }
 
         stage('8. Merge y push a MASTER'){
             steps {
-
-                
                 bat 'git merge STG --no-edit'
-                bat 'git push origin MASTER'
                 
+                withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                    bat "git push https://${GIT_USER}:${GIT_PASS}@${REPO_URL} MASTER"
+                }
             }
         }
 
-       stage('9. Desplegar vía FTP') {
+        stage('9. Desplegar vía FTP') {
             steps {
                 echo 'Subiendo archivos de React a FileZilla (C:/Despliegue_NutriVet)...'
                 ftpPublisher(
@@ -108,11 +95,11 @@ pipeline {
                     continueOnError: false,
                     failOnError: true,
                     publishers: [[
-                        configName: 'FileZilla-Local', // El nombre que le pusiste en Jenkins
+                        configName: 'FileZilla-Local', 
                         transfers: [[
-                            sourceFiles: 'src/frontend/dist/**/*', // Toma los archivos compilados
-                            removePrefix: 'src/frontend/dist',     // Quita la ruta para que suba el contenido directo
-                            remoteDirectory: '/',              // Sube a la raíz del FTP
+                            sourceFiles: 'src/frontend/dist/**/*', 
+                            removePrefix: 'src/frontend/dist',     
+                            remoteDirectory: '/',              
                             asciiMode: false,
                             cleanRemote: false,
                             excludes: '',
@@ -129,8 +116,6 @@ pipeline {
                 )
             }
         }
-
-        
     }
 
     post {
