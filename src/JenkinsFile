@@ -47,19 +47,32 @@ pipeline {
             }
         }
 
-        stage('5. Desplegar vía FTP') {
+       stage('5. Desplegar vía FTP') {
             steps {
-                echo 'Subiendo archivos de React a FileZilla (C:/Despliegue_NutriVet)...'
+                echo 'Subiendo archivos de React a FileZilla (C:\Despliegue_NutriVet)...'
                 ftpPublisher(
-                    alwaysPublishFromProjectRoot: false,
+                    alwaysPublishFromMaster: false,
                     masterNodeName: '',
-                    paramPublishers: [[
-                        configName: 'FileZilla-Local', // El nombre que puse en Jenkins
+                    paramPublish: [parameterName: ""],
+                    continueOnError: false,
+                    failOnError: true,
+                    publishers: [[
+                        configName: 'FileZilla-Local', // El nombre que le pusiste en Jenkins
                         transfers: [[
                             sourceFiles: 'src/frontend/dist/**/*', // Toma los archivos compilados
                             removePrefix: 'src/frontend/dist',     // Quita la ruta para que suba el contenido directo
                             remoteDirectory: '/',              // Sube a la raíz del FTP
-                            execCommand: ''
+                            asciiMode: false,
+                            cleanRemote: false,
+                            excludes: '',
+                            flatten: false,
+                            makeEmptyDirs: true,
+                            noDefaultExcludes: false,
+                            patternSeparator: '[, ]+',
+                            remoteDirectorySDF: false,
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
                         ]]
                     ]]
                 )
