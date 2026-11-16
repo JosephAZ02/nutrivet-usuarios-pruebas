@@ -2,37 +2,35 @@ def createEmailBody(String estado, String color, String mensaje) {
     return """
     <!DOCTYPE html>
     <html>
-    <head>
-      <style>
-        .container { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f6f9; }
-        .card { background-color: #ffffff; padding: 20px; border-radius: 8px; border-top: 5px solid ${color}; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
-        .header { color: ${color}; margin-top: 0; }
-        .details { margin-top: 20px; border-top: 1px solid #dee2e6; padding-top: 20px; font-size: 14px; color: #333; }
-        .details p { margin: 8px 0; }
-        .btn { display: inline-block; padding: 10px 20px; color: #ffffff; background-color: ${color}; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }
-        .footer { text-align: center; font-size: 12px; color: #6c757d; margin-top: 20px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="card">
-          <h2 class="header">${estado} - NutriVet</h2>
-          <p>Hola equipo,</p>
-          <p>${mensaje}</p>
-          
-          <div class="details">
-            <p><strong>Proyecto:</strong> ${env.JOB_NAME}</p>
-            <p><strong>Build Number:</strong> #${env.BUILD_NUMBER}</p>
-            <p><strong>Duración:</strong> ${currentBuild.durationString}</p>
-            <p><strong>Estado:</strong> <span style="color: ${color}; font-weight: bold;">${estado}</span></p>
-          </div>
-          
-          <a href="${env.BUILD_URL}console" class="btn">Ver Consola de Jenkins</a>
+    <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+
+        <div style="max-width: 600px; margin: auto; background-color: white; border: 1px solid #ddd;">
+
+            <div style="background-color: ${color}; color: white; padding: 15px 20px;">
+                <h2 style="margin: 0;">NutriVet - ${estado}</h2>
+            </div>
+
+            <div style="padding: 20px; color: #333;">
+                <p>Hola equipo,</p>
+
+                <p>${mensaje}</p>
+
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+
+                <h3 style="font-size: 16px;">Información del proceso</h3>
+
+                <p><strong>Proyecto:</strong> ${env.JOB_NAME}</p>
+                <p><strong>Build:</strong> #${env.BUILD_NUMBER}</p>
+                <p><strong>Duración:</strong> ${currentBuild.durationString}</p>
+                <p><strong>Estado:</strong> <span style="color: ${color};">${estado}</span></p>
+            </div>
+
+            <div style="background-color: #f5f5f5; padding: 12px 20px; color: #777; font-size: 12px;">
+                Correo automático generado por Jenkins.
+            </div>
+
         </div>
-        <div class="footer">
-          Este es un mensaje automático generado por Jenkins CI.
-        </div>
-      </div>
+
     </body>
     </html>
     """
@@ -165,17 +163,30 @@ pipeline {
             }
         }
 
-        stage('10. Compilar Frontend (React)') {
+        stage('10. Compilar Backend (Jar)') {
+            steps {
+                dir('src/backend') {
+                    echo 'Compilando el Backend en un archivo .jar...'
+                    // -DskipTests porque las pruebas ya pasaron en el Stage 2
+
+                    bat './mvnw clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('11. Compilar Frontend (React)') {
             steps {
                 dir('src/frontend') {
+                    echo 'Compilando el Frontend de React...'
                     bat 'npm install'
                     bat 'npm run build'
                 }
             }
         }
 
-        stage('11. Desplegar vía FTP') {
+        stage('12. Desplegar vía FTP') {
             steps {
+                echo 'Subiendo Frontend y Backend a sus carpetas correspondientes...'
                 ftpPublisher(
                     alwaysPublishFromMaster: false,
                     masterNodeName: '',
@@ -184,18 +195,44 @@ pipeline {
                     failOnError: true,
                     publishers: [[
                         configName: 'FileZilla-Local', 
-                        transfers: [[
-                            sourceFiles: 'src/frontend/dist/**/*', 
-                            removePrefix: 'src/frontend/dist',     
-                            remoteDirectory: '/',              
-                            asciiMode: false, cleanRemote: false, excludes: '', flatten: false,
-                            makeEmptyDirs: true, noDefaultExcludes: false, patternSeparator: '[, ]+',
-                            remoteDirectorySDF: false, usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true
-                        ]]
+                        transfers: [
+                           
+                            [
+                                sourceFiles: 'src/frontend/dist/**/*', 
+                                removePrefix: 'src/frontend/dist',     
+                                remoteDirectory: '/frontend', 
+                                asciiMode: false, cleanRemote: true, excludes: '', flatten: false,
+                                makeEmptyDirs: true, noDefaultExcludes: false, patternSeparator: '[, ]+',
+                                remoteDirectorySDF: false, usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true
+                            ],
+                           
+                            [
+                                sourceFiles: 'src/backend/target/*.jar', 
+                                removePrefix: 'src/backend/target',     
+                                remoteDirectory: '/backend', 
+                                asciiMode: false, cleanRemote: false, excludes: '', flatten: false,
+                                makeEmptyDirs: true, noDefaultExcludes: false, patternSeparator: '[, ]+',
+                                remoteDirectorySDF: false, usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true
+                            ]
+                        ]
                     ]]
                 )
             }
         }
+
+        stage('13. Reiniciar Servicio Backend') {
+            steps {
+                echo 'Reiniciando el servicio del Backend...'
+                bat '''
+                    cd C:\\Despliegue_NutriVet\\backend
+                    NutriVetBackend.exe stop || exit 0
+                    NutriVetBackend.exe uninstall || exit 0
+                    NutriVetBackend.exe install
+                    NutriVetBackend.exe start
+                '''
+            }
+        }
+        
     }
 
     post {
@@ -210,12 +247,12 @@ pipeline {
         success {
             echo 'Enviando correo de éxito...'
             emailext (
-                subject: "✅ BUILD SUCCESS: NutriVet - #${env.BUILD_NUMBER}",
+                subject: "BUILD SUCCESS: NutriVet - #${env.BUILD_NUMBER}",
                 mimeType: 'text/html',
                 to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com',
                 body: createEmailBody(
-                    "✅ Pipeline Exitoso", 
+                    "Pipeline Exitoso", 
                     "#198754", 
                     "El pipeline ha finalizado <b>satisfactoriamente</b>. Las pruebas pasaron, el código se mergeó y los archivos están en el servidor."
                 )
@@ -224,12 +261,12 @@ pipeline {
         failure {
             echo 'Enviando correo de error...'
             emailext (
-                subject: "❌ BUILD FAILED: NutriVet - #${env.BUILD_NUMBER}",
+                subject: "BUILD FAILED: NutriVet - #${env.BUILD_NUMBER}",
                 mimeType: 'text/html',
                 to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com',
                 body: createEmailBody(
-                    "❌ Pipeline Fallido", 
+                    "Pipeline Fallido", 
                     "#dc3545", 
                     "El pipeline ha <b>fallado</b>. Los cambios <b>NO</b> se han subido a producción. Revisa la consola para más detalles."
                 )
