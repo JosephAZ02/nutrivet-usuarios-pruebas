@@ -53,6 +53,8 @@ public class InvoiceEmailService {
         Properties properties = new Properties();
         properties.put("mail.store.protocol", "imaps");// usar el protocolo IMAPS
 
+        
+
         Session session = Session.getInstance(properties);// crear una sesión de correo con las propiedades configuradas
 
         try (Store store = session.getStore("imaps")) {

@@ -1,0 +1,109 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven' 
+        jdk 'JDK17'
+    }
+
+    environment {
+        EMAIL_TO = 'tu-correo@gmail.com' // <-- CAMBIA ESTO POR TU CORREO REAL
+    }
+
+    stages {
+        stage('1. Checkout DEV') {
+            steps {
+                echo 'Descargando código desde la rama DEV...'
+                git branch: 'DEV', credentialsId: 'github-credentials', url: 'https://github.com/JosephAZ02/nutrivet-usuarios-pruebas.git'
+            }
+        }
+
+        stage('2. Pruebas Unitarias Backend') {
+            steps {
+                dir('src/backend') {
+                    echo 'Ejecutando pruebas unitarias de Java...'
+                    
+                    bat './mvnw clean test'
+                }
+            }
+        }
+
+        stage('3. Pruebas Selenium (GUI)') {
+            steps {
+                dir('src/selenium-tests') {
+                    echo 'Ejecutando pruebas de interfaz con Selenium...'
+                    bat 'mvn clean test'
+                }
+            }
+        }
+
+        stage('4. Compilar Frontend (React)') {
+            steps {
+                dir('src/frontend') {
+                    echo 'Instalando dependencias y compilando React...'
+                    bat 'npm install'
+                    bat 'npm run build'
+                }
+            }
+        }
+
+        stage('5. Desplegar vía FTP') {
+            steps {
+                echo 'Subiendo archivos de React a FileZilla (C:\Despliegue_NutriVet)...'
+                ftpPublisher(
+                    alwaysPublishFromProjectRoot: false,
+                    masterNodeName: '',
+                    paramPublishers: [[
+                        configName: 'FileZilla-Local', // El nombre que puse en Jenkins
+                        transfers: [[
+                            sourceFiles: 'src/frontend/dist/**/*', // Toma los archivos compilados
+                            removePrefix: 'src/frontend/dist',     // Quita la ruta para que suba el contenido directo
+                            remoteDirectory: '/',              // Sube a la raíz del FTP
+                            execCommand: ''
+                        ]]
+                    ]]
+                )
+            }
+        }
+
+        stage('6. Merge a STG y MASTER') {
+            steps {
+                echo 'Haciendo merge automático a STG y MASTER...'
+                // Configuramos identidad de Git para que no falle el merge
+                bat 'git config --global user.email "jenkins@nutrivet.com"'
+                bat 'git config --global user.name "Jenkins CI"'
+                
+                // Merge a STG
+                bat 'git checkout STG'
+                bat 'git merge DEV --no-edit'
+                bat 'git push origin STG'
+                
+                // Merge a MASTER
+                bat 'git checkout MASTER'
+                bat 'git merge STG --no-edit'
+                bat 'git push origin MASTER'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Enviando correo de éxito...'
+            emailext (
+                subject: "✅ BUILD SUCCESS: NutriVet - #${env.BUILD_NUMBER}",
+                body: "El pipeline ha finalizado con éxito. Las pruebas pasaron, el código se mergeó a MASTER y los archivos ya están en el servidor.",
+                to: "nutrivetwg@gmail.com",
+                from: 'jenkins@nutrivet.com'
+            )
+        }
+        failure {
+            echo 'Enviando correo de error...'
+            emailext (
+                subject: "❌ BUILD FAILED: NutriVet - #${env.BUILD_NUMBER}",
+                body: "El pipeline ha fallado. Revisa el log en Jenkins. Los cambios NO se han subido a producción.",
+                to: "nutrivetwg@gmail.com",
+                from: 'jenkins@nutrivet.com'
+            )
+        }
+    }
+}
