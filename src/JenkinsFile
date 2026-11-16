@@ -69,7 +69,7 @@ pipeline {
             }
         }
 
-        stage('3 Levantar Servidores (Back y Front)') {
+        stage('3 Levantar Servidores (Back y Front) Para Pruebas Selenium') {
             steps {
                 echo 'Iniciando Spring Boot y Vite en segundo plano...'
                 // Levantar Backend
@@ -96,6 +96,17 @@ pipeline {
             }
         }
 
+
+        stage('5. Detener Servidores Levantados (Back y Front) Para Pruebas Selenium'){
+            steps{
+
+                echo 'Deteniendo servidores Back y Front...'
+                
+                bat 'taskkill /F /IM node.exe || exit 0'
+                bat 'for /f "tokens=5" %%a in (\'netstat -aon ^| findstr :8080\') do taskkill /F /PID %%a || exit 0'
+
+            }
+        }
         
 
         stage('5. Checkout a STG') {
@@ -201,7 +212,7 @@ pipeline {
                 mimeType: 'text/html',
                 to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com',
-                body: generarCuerpoCorreo(
+                body: createEmailBody(
                     "Pipeline Exitoso", 
                     "#198754", 
                     "El pipeline ha finalizado <b>satisfactoriamente</b>. Las pruebas unitarias y de Selenium pasaron, el código se mergeó a MASTER y los archivos ya están en el servidor."
@@ -216,7 +227,7 @@ pipeline {
                 mimeType: 'text/html',
                 to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com',
-                 body: generarCuerpoCorreo(
+                 body: createEmailBody(
                     "Pipeline Fallido", 
                     "#dc3545", 
                     "El pipeline ha <b>fallado</b>. Los cambios <b>NO</b> se han subido a STG ni a MASTER. El servidor de producción sigue seguro con la versión anterior. Revisa la consola para más detalles."
