@@ -1,4 +1,3 @@
-
 def createEmailBody(String estado, String color, String mensaje) {
     return """
     <!DOCTYPE html>
@@ -63,7 +62,7 @@ pipeline {
         stage('2. Pruebas Unitarias Backend') {
             steps {
                 dir('src/backend') {
-                    echo 'Ejecutando pruebas unitarias del módulo de Usuarios...'
+                    echo 'Ejecutando pruebas unitarias...'
                     bat './mvnw test "-Dtest=UserServiceTest"'
                 }
             }
@@ -73,10 +72,9 @@ pipeline {
             steps {
                 echo 'Inyectando archivo de configuración secreto...'
                 
-                
                 withCredentials([file(credentialsId: 'app-local-properties', variable: 'APP_PROPS')]) {
                     
-                    bat 'copy "%APP_PROPS%" "src//backend//src//main//resources//application-local.properties"'
+                    bat 'copy "%APP_PROPS%" "src\\backend\\src\\main\\resources\\application-local.properties"'
 
                     echo 'Iniciando Spring Boot y Vite en segundo plano...'
                     dir('src/backend') {
@@ -86,55 +84,52 @@ pipeline {
                         bat 'start cmd /c "npm run dev"'
                     }
                     
-                    echo 'Esperando 40 segundos...'
-                    sleep(time: 40, unit: 'SECONDS') 
+                    echo 'Esperando 60 segundos para que los servidores inicien...'
+                    sleep(time: 60, unit: 'SECONDS') 
+
+                    echo 'Verificando que el Backend esté respondiendo...'
+                    // Esto hará que el pipeline falle si el backend no responde
+                    bat 'curl -s -o /dev/null -w "%%{http_code}" http://localhost:8080/api/auth/login || exit 1'
                 }
             }
         }
 
-
         stage('4. Pruebas Selenium (GUI)') {
             steps {
                 dir('src/selenium-tests') {
-                    echo 'Ejecutando pruebas de interfaz con Selenium...'
+                    echo 'Ejecutando pruebas de interfaz...'
                     bat 'mvn clean test'
                 }
             }
         }
 
-
-        stage('5. Detener Servidores Levantados (Back y Front) Para Pruebas Selenium'){
-            steps{
-
-                echo 'Deteniendo servidores Back y Front...'
-                
-                bat 'taskkill /F /IM node.exe || exit 0'
-                bat 'for /f "tokens=5" %%a in (\'netstat -aon ^| findstr :8080\') do taskkill /F /PID %%a || exit 0'
-
+        stage('5. Detener Servidores') {
+            steps {
+                echo 'Deteniendo servidores (Back y Front)...'
+                powershell '''
+                    Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force
+                    $java = Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue
+                    if ($java) { Stop-Process -Id $java.OwningProcess -Force }
+                '''
+                sleep(time: 3, unit: 'SECONDS') 
             }
         }
-        
 
         stage('6. Checkout a STG') {
             steps {
                 echo 'Haciendo checkout automático a STG...'
                 bat 'git config --global user.email "jyalfazu021421@gmail.com"'
                 bat 'git config --global user.name "JosephAZ02"'
-                
                 bat 'if exist "src\\backend\\src\\main\\resources\\application-local.properties" del "src\\backend\\src\\main\\resources\\application-local.properties"'
                 bat 'git reset --hard'
                 bat 'git clean -fd'
-
-                
                 bat 'git checkout STG'
             }
         }
 
         stage('7. Merge y push a STG'){
             steps {
-                echo 'Haciendo merge automático a STG...'
                 bat 'git merge DEV --no-edit'
-                
                 withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
                     bat "git push https://${GIT_USER}:${GIT_PASS}@${REPO_URL} STG"
                 }
@@ -143,26 +138,22 @@ pipeline {
 
         stage('8. Checkout a MASTER') {
             steps {
-                echo 'Haciendo checkout automático a MASTER...'
                 bat 'git checkout MASTER'
             }
         }
 
         stage('9. Merge y push a MASTER'){
             steps {
-                echo 'Haciendo merge automático a MASTER...'
                 bat 'git merge STG --no-edit'
-                
                 withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
                     bat "git push https://${GIT_USER}:${GIT_PASS}@${REPO_URL} MASTER"
                 }
             }
         }
 
-        stage('10. Compilar Frontend (React) para subirlo por ftp') {
+        stage('10. Compilar Frontend (React)') {
             steps {
                 dir('src/frontend') {
-                    echo 'Instalando dependencias y compilando React...'
                     bat 'npm install'
                     bat 'npm run build'
                 }
@@ -171,7 +162,6 @@ pipeline {
 
         stage('11. Desplegar vía FTP') {
             steps {
-                echo 'Subiendo archivos de React a FileZilla...'
                 ftpPublisher(
                     alwaysPublishFromMaster: false,
                     masterNodeName: '',
@@ -184,17 +174,9 @@ pipeline {
                             sourceFiles: 'src/frontend/dist/**/*', 
                             removePrefix: 'src/frontend/dist',     
                             remoteDirectory: '/',              
-                            asciiMode: false,
-                            cleanRemote: false,
-                            excludes: '',
-                            flatten: false,
-                            makeEmptyDirs: true,
-                            noDefaultExcludes: false,
-                            patternSeparator: '[, ]+',
-                            remoteDirectorySDF: false,
-                            usePromotionTimestamp: false,
-                            useWorkspaceInPromotion: false,
-                            verbose: true
+                            asciiMode: false, cleanRemote: false, excludes: '', flatten: false,
+                            makeEmptyDirs: true, noDefaultExcludes: false, patternSeparator: '[, ]+',
+                            remoteDirectorySDF: false, usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true
                         ]]
                     ]]
                 )
@@ -204,43 +186,38 @@ pipeline {
 
     post {
         always {
-            echo 'Limpiando los servidores temporales...'
-            
-            // Cierra el proceso de Node (Vite) de forma segura
-            bat 'taskkill /F /IM node.exe || exit 0'
-            
-            // Cierra el proceso de Java que está en el puerto 8080 (Backend) sin matar a Jenkins
-            bat 'for /f "tokens=5" %%a in (\'netstat -aon ^| findstr :8080\') do taskkill /F /PID %%a || exit 0'
-            
-            echo 'Limpieza finalizada.'
+            echo 'Limpiando procesos colgados...'
+            powershell '''
+                Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force
+                $java = Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue
+                if ($java) { Stop-Process -Id $java.OwningProcess -Force }
+            '''
         }
         success {
-            echo 'El Pipeline finalizó satisfactoriamente!'
             echo 'Enviando correo de éxito...'
             emailext (
-                subject: "BUILD SUCCESS: NutriVet - #${env.BUILD_NUMBER}",
+                subject: "✅ BUILD SUCCESS: NutriVet - #${env.BUILD_NUMBER}",
                 mimeType: 'text/html',
                 to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com',
                 body: createEmailBody(
-                    "Pipeline Exitoso", 
+                    "✅ Pipeline Exitoso", 
                     "#198754", 
-                    "El pipeline ha finalizado <b>satisfactoriamente</b>. Las pruebas unitarias y de Selenium pasaron, el código se mergeó a MASTER y los archivos ya están en el servidor."
+                    "El pipeline ha finalizado <b>satisfactoriamente</b>. Las pruebas pasaron, el código se mergeó y los archivos están en el servidor."
                 )
             )
         }
         failure {
-            echo 'El Pipeline lamentablemente falló.'
             echo 'Enviando correo de error...'
             emailext (
-                subject: "BUILD FAILED: NutriVet - #${env.BUILD_NUMBER}",
+                subject: "❌ BUILD FAILED: NutriVet - #${env.BUILD_NUMBER}",
                 mimeType: 'text/html',
                 to: "${env.EMAIL_TO}",
                 from: 'jenkins@nutrivet.com',
-                 body: createEmailBody(
-                    "Pipeline Fallido", 
+                body: createEmailBody(
+                    "❌ Pipeline Fallido", 
                     "#dc3545", 
-                    "El pipeline ha <b>fallado</b>. Los cambios <b>NO</b> se han subido a STG ni a MASTER. El servidor de producción sigue seguro con la versión anterior. Revisa la consola para más detalles."
+                    "El pipeline ha <b>fallado</b>. Los cambios <b>NO</b> se han subido a producción. Revisa la consola para más detalles."
                 )
             )
         }
