@@ -49,7 +49,7 @@ pipeline {
 
         stage('5. Desplegar vía FTP') {
             steps {
-                echo 'Subiendo archivos de React a FileZilla (C:\Despliegue_NutriVet)...'
+                echo 'Subiendo archivos de React a FileZilla (C:/Despliegue_NutriVet)...'
                 ftpPublisher(
                     alwaysPublishFromProjectRoot: false,
                     masterNodeName: '',
