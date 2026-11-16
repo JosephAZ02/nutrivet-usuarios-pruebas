@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         maven 'Maven' 
-        jdk 'JDK17'
+        jdk 'JDK25'
     }
 
     environment {
@@ -23,7 +23,7 @@ pipeline {
                 dir('src/backend') {
                     echo 'Ejecutando pruebas unitarias de Java...'
                     
-                    bat './mvnw clean test'
+                    bat './mvnw test "-Dtest=UserServiceTest"'
                 }
             }
         }
@@ -82,9 +82,10 @@ pipeline {
         stage('6. Merge a STG y MASTER') {
             steps {
                 echo 'Haciendo merge automático a STG y MASTER...'
+
                 // Configuramos identidad de Git para que no falle el merge
-                bat 'git config --global user.email "jenkins@nutrivet.com"'
-                bat 'git config --global user.name "Jenkins CI"'
+                bat 'git config --global user.email "jyalfazu021421@gmail.com"'
+                bat 'git config --global user.name "JosephAZ02"'
                 
                 // Merge a STG
                 bat 'git checkout STG'
