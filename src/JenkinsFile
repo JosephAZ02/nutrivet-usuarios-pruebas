@@ -76,14 +76,12 @@ pipeline {
                     
                     bat 'copy "%APP_PROPS%" "src\\backend\\src\\main\\resources\\application-local.properties"'
 
-                    echo 'Iniciando Spring Boot y Vite (guardando logs)...'
+                    echo 'Iniciando Spring Boot y Vite...'
                     
-                    // Levantar Backend y guardar logs en un archivo
                     dir('src/backend') {
                         powershell 'Start-Process -FilePath "cmd.exe" -ArgumentList "/c .\\mvnw spring-boot:run > backend.log 2>&1" -WindowStyle Hidden'
                     }
                     
-                    // Levantar Frontend y guardar logs
                     dir('src/frontend') {
                         powershell 'Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm run dev > frontend.log 2>&1" -WindowStyle Hidden'
                     }
@@ -91,14 +89,19 @@ pipeline {
                     echo 'Esperando 60 segundos para que los servidores inicien...'
                     sleep(time: 60, unit: 'SECONDS') 
 
-                    echo 'Verificando que el Backend esté respondiendo...'
-                    // Verificamos si responde. Si falla, imprimimos el log del backend
+                    echo 'Verificando si el puerto 8080 (Backend) está abierto...'
                     script {
-                        def status = bat(script: 'curl -s -o /dev/null -w "%%{http_code}" http://localhost:8080/api/auth/login', returnStatus: true)
+                        // Test-NetConnection verifica si el puerto está escuchando
+                        def status = powershell(script: 'if (Test-NetConnection -ComputerName localhost -Port 8080 -InformationLevel Quiet) { exit 0 } else { exit 1 }', returnStatus: true)
+                        
                         if (status != 0) {
-                            echo 'ERROR: El Backend no está respondiendo. Mostrando los últimos logs:'
-                            bat 'type src/backend/backend.log'
+                            echo 'ERROR: El Backend no está escuchando en el puerto 8080. Logs:'
+                            dir('src/backend') {
+                                bat 'type backend.log'
+                            }
                             error("El Backend falló al arrancar. Revisa el log de arriba.")
+                        } else {
+                            echo '✅ Backend está en línea y listo para Selenium.'
                         }
                     }
                 }
