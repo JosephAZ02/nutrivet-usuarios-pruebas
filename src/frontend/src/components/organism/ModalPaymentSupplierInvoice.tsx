@@ -21,11 +21,7 @@ interface ModalPaymentSupplierInvoiceProps {
     message?: { type: string; text: string } | null;
 }
 
-const stateLabels: Record<string, string> = {
-    PENDING: "Pendiente",
-    PAID: "Pagada",
-    CANCELLED: "Cancelada",
-};
+
 
 
 export function ModalPaymentSupplierInvoice({
