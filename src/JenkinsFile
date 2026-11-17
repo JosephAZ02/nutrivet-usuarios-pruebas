@@ -225,9 +225,10 @@ pipeline {
                 echo 'Reiniciando el servicio del Backend...'
                 bat '''
                     cd C:\\Despliegue_NutriVet\\backend
-                    NutriVetBackend.exe stop || exit 0
-                    NutriVetBackend.exe uninstall || exit 0
-                    NutriVetBackend.exe install
+                    
+                    NutriVetBackend.exe stop 
+                    
+                    
                     NutriVetBackend.exe start
                 '''
             }
