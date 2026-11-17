@@ -99,7 +99,7 @@ pipeline {
                             }
                             error("El Backend falló al arrancar. Revisa el log de arriba.")
                         } else {
-                            echo '✅ Backend está en línea y listo para Selenium.'
+                            echo 'Backend está en línea y listo para Selenium.'
                         }
                     }
                 }
@@ -223,7 +223,7 @@ pipeline {
         
     }
 
-    
+
 
     post {
         always {
